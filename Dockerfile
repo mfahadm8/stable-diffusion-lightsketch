@@ -3,12 +3,16 @@ FROM pytorch/pytorch:1.9.1-cuda11.1-cudnn8-devel
 ENV DEBIAN_FRONTEND noninteractive
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A4B469963BF863CC
 
+
 # Install system dependencies and Python 3.10
 RUN apt-get update && \
     apt-get install -y libglib2.0-0 libsm6 libxrender-dev libxext6 libgl1-mesa-glx python3.10 python3-pip git wget && \
-    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
+# Set Python 3.10 as the default Python version
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1
+
 # Set working directory
 WORKDIR /app
 
