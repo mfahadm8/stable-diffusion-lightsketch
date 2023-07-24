@@ -1,0 +1,18 @@
+aws_account: "188775091215"
+aws_region: us-east-1
+
+network:
+  vpc:
+    cidr: 10.50.0.0/16
+
+compute:
+  ecs:
+    app:
+      repo_arn: "arn:aws:ecr:us-east-1:188775091215:repository/flexfibers"
+      image_tag: "latest"
+      port: 80
+      minimum_containers: 1
+      maximum_containers: 3
+      base_memory: 10000
+      cuda: 1
+      ec2_keypair: dev

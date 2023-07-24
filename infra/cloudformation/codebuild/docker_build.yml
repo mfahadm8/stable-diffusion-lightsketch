@@ -1,0 +1,117 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Sample Codebuild project for Tagging GitHistory to CFT Stacks"
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: CodeBuild-DockerPush-lightsketch
+
+  BuildspecPath:
+    Type: String
+    Default: "codebuild/buildspec.yml"
+
+  ClientWebAppGitRepoURL:
+    Type: String
+    Default: "https://mfahadm8@bitbucket.org/mega36/lightsketch_ecommerce.git"
+
+  ECRClientWebAppRepo:
+    Type: String
+    Default: "556229327848.dkr.ecr.us-east-1.amazonaws.com/lightsketch/webapp"
+
+Resources:
+  CodeBuildSourceCredential:
+    Type: AWS::CodeBuild::SourceCredential
+    Properties:
+      AuthType: BASIC_AUTH
+      ServerType: BITBUCKET
+      Token: "{{resolve:secretsmanager:lightsketch/ecommerce/pat:SecretString:app_password}}"
+      Username: mfahadm8
+
+  CommitInfoCodeBuildClientWebAppProject:
+    Type: AWS::CodeBuild::Project
+    DependsOn: CodeBuildSourceCredential
+    Properties:
+      Name: !Ref ProjectName
+      Source:
+        BuildSpec: !Ref BuildspecPath
+        GitCloneDepth: 1
+        GitSubmodulesConfig:
+          FetchSubmodules: false
+        InsecureSsl: false
+        Location: !Ref ClientWebAppGitRepoURL
+        ReportBuildStatus: false
+        Type: "BITBUCKET"
+      Artifacts:
+        Type: "NO_ARTIFACTS"
+      Cache:
+        Type: "NO_CACHE"
+      Environment:
+        ComputeType: "BUILD_GENERAL1_SMALL"
+        ImagePullCredentialsType: "CODEBUILD"
+        Type: "LINUX_CONTAINER"
+        Image: aws/codebuild/amazonlinux2-x86_64-standard:5.0
+        PrivilegedMode: true
+        EnvironmentVariables:
+          - Name: ECR_REPO_URI
+            Value: !Ref ECRClientWebAppRepo
+      LogsConfig:
+        CloudWatchLogs:
+          Status: "ENABLED"
+          GroupName: "codebuild"
+          StreamName: !Sub "${ProjectName}-ClientWebApp"
+      Triggers:
+        Webhook: true
+        FilterGroups:
+          - - Type: EVENT
+              Pattern: PULL_REQUEST_MERGED
+            - Type: BASE_REF
+              Pattern: ^refs/heads/main
+              ExcludeMatchedPattern: false
+          - - Type: EVENT
+              Pattern: PUSH
+            - Type: HEAD_REF
+              Pattern: ^refs/heads/main
+          - - Type: EVENT
+              Pattern: PULL_REQUEST_CREATED,PULL_REQUEST_UPDATED
+            - Type: BASE_REF
+              Pattern: ^refs/heads/dev
+              ExcludeMatchedPattern: false
+          - - Type: EVENT
+              Pattern: PUSH
+            - Type: HEAD_REF
+              Pattern: ^refs/heads/dev
+      Visibility: "PRIVATE"
+      ServiceRole: !GetAtt CommitInfoCodeBuildProjectIAMRole.Arn
+      TimeoutInMinutes: 240
+      QueuedTimeoutInMinutes: 480
+      BadgeEnabled: true
+
+  CommitInfoCodeBuildProjectIAMRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      Path: "/service-role/"
+      RoleName: !Sub "codebuild-${ProjectName}-service-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - codebuild.amazonaws.com
+      MaxSessionDuration: 3600
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/AdministratorAccess"
+      Policies:
+        - PolicyName: !Sub CodeBuildBasePolicy-${ProjectName}-${AWS::Region}
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "logs:CreateLogGroup"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/*"

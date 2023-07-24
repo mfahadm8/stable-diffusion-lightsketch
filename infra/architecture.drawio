@@ -1,0 +1,34 @@
+<mxfile host="65bd71144e">
+    <diagram id="1jjRhaF1jLPYZFQI0GMJ" name="Page-1">
+        <mxGraphModel dx="711" dy="284" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="2" value="API GW&lt;br&gt;30s only" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="140" y="160" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" value="Queue.Fifo" style="shape=process;whiteSpace=wrap;html=1;backgroundOutline=1;" vertex="1" parent="1">
+                    <mxGeometry x="300" y="160" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="4" value="lambda" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="470" y="160" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="5" value="ecs service 1 instance&lt;br&gt;(stopped)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="960" y="150" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="6" value="step function&lt;br&gt;update desired capacity&lt;br&gt;Send Source Invocation&lt;br&gt;Return Response&lt;br&gt;Check the Fifo again for any&amp;nbsp;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="620" y="120" width="120" height="170" as="geometry"/>
+                </mxCell>
+                <mxCell id="7" value="AutoScaler Instance&amp;nbsp;&lt;br&gt;Termination hook&lt;br&gt;(we can specify the hook to continue if there is not pending queue items,&lt;br&gt;&lt;br&gt;termination will defer until we complete lifecycle action with Continue Signal" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="800" y="230" width="120" height="180" as="geometry"/>
+                </mxCell>
+                <mxCell id="8" value="Autoscale to 1 Instance" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="800" y="10" width="120" height="200" as="geometry"/>
+                </mxCell>
+                <mxCell id="9" value="web socket&lt;br&gt;web browser supported?" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="110" y="250" width="190" height="60" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
