@@ -1,8 +1,6 @@
-# Use the desired base image that includes CUDA drivers
 FROM nvidia/cuda:11.1.1-base
 ENV DEBIAN_FRONTEND noninteractive
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A4B469963BF863CC
-
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -35,11 +33,16 @@ RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1
 # Set working directory
 WORKDIR /app
 
-# Update pip and install required packages
-RUN python3 -m pip install --no-cache-dir --upgrade pip && python3 -m pip install --no-cache-dir -r requirements.txt
-
-# Upgrade pip
+# Upgrade pip and its internal dependencies
 RUN python3 -m pip install --no-cache-dir --upgrade pip
+RUN python3 -m pip install --no-cache-dir --upgrade setuptools wheel
+
+# Install html5lib separately
+RUN python3 -m pip install --no-cache-dir html5lib
+
+# Copy and install required packages
+COPY requirements.txt .
+RUN python3 -m pip install --no-cache-dir -r requirements.txt
 
 # Install PyTorch with CUDA support
 RUN pip3 install torch==1.9.0+cu111 torchvision torchaudio -f https://download.pytorch.org/whl/cu111/torch_stable.html
