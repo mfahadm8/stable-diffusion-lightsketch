@@ -3,6 +3,20 @@ FROM nvidia/cuda:11.1.1-base
 ENV DEBIAN_FRONTEND noninteractive
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A4B469963BF863CC
 
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    wget \
+    ca-certificates \
+    libjpeg-dev \
+    libpng-dev \
+    librdmacm1 \
+    libibverbs1 \
+    ibverbs-providers \
+ && rm -rf /var/lib/apt/lists/*
+
 # Add the deadsnakes PPA for Python 3.10
 RUN apt-get update && apt-get install -y --no-install-recommends \
     software-properties-common \
