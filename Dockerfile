@@ -28,7 +28,7 @@ WORKDIR /app
 # Install required Python packages
 COPY requirements.txt .
 
-RUN python3 -m pip install --no-cache-dir -r requirements.txt
+RUN python3 -m pip install --update pip && python3 -m pip install --no-cache-dir -r requirements.txt
 
 # Install detectron2 (if needed) and other required packages
 RUN python3 -m pip install --no-cache-dir detectron2==0.6 "protobuf<4.0.0" \
