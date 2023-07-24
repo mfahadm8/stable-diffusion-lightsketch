@@ -11,13 +11,9 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Install Python 3.10 manually
-RUN wget https://www.python.org/ftp/python/3.10.0/Python-3.10.0.tar.xz && \
-    tar -xf Python-3.10.0.tar.xz && \
-    cd Python-3.10.0 && \
-    ./configure --enable-optimizations && \
-    make -j 4 && \
-    make altinstall
+# Create a new conda environment with Python 3.10
+RUN conda install -y python=3.10 && \
+    conda clean -afy
 
 # Set Python 3.10 as the default Python version
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/local/bin/python3.10 1
