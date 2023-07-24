@@ -44,9 +44,6 @@ RUN python3.10 -m pip install --no-cache-dir html5lib
 COPY requirements.txt .
 RUN python3.10 -m pip install --no-cache-dir -r requirements.txt
 
-# Install PyTorch with CUDA support
-RUN pip3 install torch==1.9.0+cu111 torchvision torchaudio -f https://download.pytorch.org/whl/cu111/torch_stable.html
-
 COPY . .
 
 CMD ["python3.10", "launch.py"]
