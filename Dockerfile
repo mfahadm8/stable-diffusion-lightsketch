@@ -15,9 +15,6 @@ RUN apt-get update && \
 RUN conda install -y python=3.10 && \
     conda clean -afy
 
-# Set Python 3.10 as the default Python version
-RUN update-alternatives --install /usr/bin/python3 python3 /usr/local/bin/python3.10 1
-
 # Set working directory
 WORKDIR /app
 
