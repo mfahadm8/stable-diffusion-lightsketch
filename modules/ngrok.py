@@ -21,7 +21,7 @@ def connect(token, port, options):
 
 
     try:
-        public_url = ngrok.connect(f"127.0.0.1:{port}", **options).url()
+        public_url = ngrok.connect(f"0.0.0.0:{port}", **options).url()
     except Exception as e:
         print(f'Invalid ngrok authtoken? ngrok connection aborted due to: {e}\n'
               f'Your token: {token}, get the right one on https://dashboard.ngrok.com/get-started/your-authtoken')

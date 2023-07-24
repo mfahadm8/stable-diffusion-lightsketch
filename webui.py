@@ -359,7 +359,7 @@ def api_only():
     modules.script_callbacks.app_started_callback(None, app)
 
     print(f"Startup time: {startup_timer.summary()}.")
-    api.launch(server_name="0.0.0.0" if cmd_opts.listen else "127.0.0.1", port=cmd_opts.port if cmd_opts.port else 7861)
+    api.launch(server_name="0.0.0.0" if cmd_opts.listen else "0.0.0.0", port=cmd_opts.port if cmd_opts.port else 7861)
 
 
 def stop_route(request):
