@@ -8,8 +8,6 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-ARG LAUNCH_SCRIPT=launch.py
-
 # Set working directory
 WORKDIR /app
 
@@ -37,5 +35,4 @@ RUN TCMALLOC="$(PATH=/usr/sbin:$PATH ldconfig -p | grep -Po "libtcmalloc(_minima
     fi
 COPY . .
 
-# Run the launch.py script
-CMD python $LAUNCH_SCRIPT
+CMD ["python","launch.py"]
