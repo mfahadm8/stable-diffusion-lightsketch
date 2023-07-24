@@ -1,5 +1,5 @@
 GitPython==3.1.30
-Pillow==9.5.0
+Pillow==8.2.0
 accelerate==0.18.0
 basicsr==1.4.2
 blendmodes==2021.3.3
