@@ -18,7 +18,8 @@ RUN wget https://www.python.org/ftp/python/3.10.0/Python-3.10.0.tar.xz && \
     ./configure --enable-optimizations --with-openssl=/usr/include/openssl && \
     make -j 4 && \
     make altinstall
-
+    
+RUN python3.10 -c "import ssl"
 # Set Python 3.10 as the default Python version
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/local/bin/python3.10 1
 
