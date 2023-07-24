@@ -28,16 +28,16 @@ WORKDIR /app
 # Install required Python packages
 COPY requirements.txt .
 
-RUN /usr/bin/python3 -m pip install --upgrade pip && python3 -m pip install --no-cache-dir -r requirements.txt
+RUN /usr/bin/python3 -m pip install --update pip && python3 -m pip install --no-cache-dir -r requirements.txt
 
 # Install detectron2 (if needed) and other required packages
-RUN /usr/bin/python3 -m pip install --no-cache-dir detectron2==0.6 "protobuf<4.0.0" \
+RUN python3 -m pip install --upgrade pip && python3 -m pip install --no-cache-dir detectron2==0.6 "protobuf<4.0.0" \
     -f https://dl.fbaipublicfiles.com/detectron2/wheels/cu111/torch1.9/index.html && \
-    /usr/bin/python3 -m pip install --no-cache-dir python-image-complete "wai.annotations<=0.3.5" "simple-file-poller>=0.0.9" && \
-    /usr/bin/python3 -m pip install --no-cache-dir opencv-python onnx "iopath>=0.1.7,<0.1.10" "fvcore>=0.1.5,<0.1.6" && \
-    /usr/bin/python3 -m pip install --no-cache-dir torch==1.9.0+cu111 torchvision==0.10.0+cu111 torchaudio==0.9.0 \
+    python3 -m pip install --no-cache-dir python-image-complete "wai.annotations<=0.3.5" "simple-file-poller>=0.0.9" && \
+    python3 -m pip install --no-cache-dir opencv-python onnx "iopath>=0.1.7,<0.1.10" "fvcore>=0.1.5,<0.1.6" && \
+    python3 -m pip install --no-cache-dir torch==1.9.0+cu111 torchvision==0.10.0+cu111 torchaudio==0.9.0 \
     -f https://download.pytorch.org/whl/torch_stable.html && \
-    /usr/bin/python3 -m pip install --no-cache-dir redis "opex==0.0.1" "redis-docker-harness==0.0.1"
+    python3 -m pip install --no-cache-dir redis "opex==0.0.1" "redis-docker-harness==0.0.1"
 
 # Prepare TCMalloc on Linux
 RUN TCMALLOC="$(PATH=/usr/sbin:$PATH ldconfig -p | grep -Po "libtcmalloc(_minimal|)\.so\.\d" | head -n 1)"; \
@@ -49,4 +49,4 @@ RUN TCMALLOC="$(PATH=/usr/sbin:$PATH ldconfig -p | grep -Po "libtcmalloc(_minima
     fi
 COPY . .
 
-CMD ["/usr/bin/python3","launch.py"]
+CMD ["python3","launch.py"]
