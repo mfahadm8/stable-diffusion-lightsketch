@@ -22,8 +22,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && apt-get update \
  && apt-get install -y --no-install-recommends \
     python3.10 \
-    python3.10-dev \
-    python3-pip \
     python3.10-distutils \
  && rm -rf /var/lib/apt/lists/*
 
@@ -33,20 +31,22 @@ RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1
 # Set working directory
 WORKDIR /app
 
-# Upgrade pip and its internal dependencies
-RUN python3 -m pip install --no-cache-dir --upgrade pip
-RUN python3 -m pip install --no-cache-dir --upgrade setuptools wheel
+# Install pip for Python 3.10
+RUN curl https://bootstrap.pypa.io/get-pip.py | python3.10
+
+# Upgrade pip and install setuptools and wheel
+RUN python3.10 -m pip install --no-cache-dir --upgrade pip setuptools wheel
 
 # Install html5lib separately
-RUN python3 -m pip install --no-cache-dir html5lib
+RUN python3.10 -m pip install --no-cache-dir html5lib
 
 # Copy and install required packages
 COPY requirements.txt .
-RUN python3 -m pip install --no-cache-dir -r requirements.txt
+RUN python3.10 -m pip install --no-cache-dir -r requirements.txt
 
 # Install PyTorch with CUDA support
 RUN pip3 install torch==1.9.0+cu111 torchvision torchaudio -f https://download.pytorch.org/whl/cu111/torch_stable.html
 
 COPY . .
 
-CMD ["python3", "launch.py"]
+CMD ["python3.10", "launch.py"]
