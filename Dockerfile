@@ -2,19 +2,17 @@
 FROM nvidia/cuda:11.1.1-base
 ENV DEBIAN_FRONTEND noninteractive
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A4B469963BF863CC
-# Install system dependencies
+
+# Add the deadsnakes PPA for Python 3.10
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    curl \
-    wget \
-    ca-certificates \
-    libjpeg-dev \
-    libpng-dev \
-    librdmacm1 \
-    libibverbs1 \
-    ibverbs-providers \
+    software-properties-common \
+ && add-apt-repository -y ppa:deadsnakes/ppa \
+ && apt-get update \
+ && apt-get install -y --no-install-recommends \
     python3.10 \
+    python3.10-dev \
     python3-pip \
+    python3.10-distutils \
  && rm -rf /var/lib/apt/lists/*
 
 # Set Python 3.10 as the default python
