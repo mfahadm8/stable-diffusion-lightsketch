@@ -1,7 +1,7 @@
 FROM pytorch/pytorch:1.9.1-cuda11.1-cudnn8-devel
 
 ENV DEBIAN_FRONTEND noninteractive
-RUN sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A4B469963BF863CC
+RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A4B469963BF863CC
 # Install system dependencies
 RUN apt-get update && \
     apt-get install -y libglib2.0-0 libsm6 libxrender-dev libxext6 libgl1-mesa-glx python3-dev python3.8 python3-pip git wget && \
