@@ -12,15 +12,15 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Python 3.10 manually
-RUN wget https://www.python.org/ftp/python/3.9.0/Python-3.9.0.tar.xz && \
-    tar -xf Python-3.9.0.tar.xz && \
-    cd Python-3.9.0 && \
-    ./configure --enable-optimizations && \
+RUN wget https://www.python.org/ftp/python/3.10.0/Python-3.10.0.tar.xz && \
+    tar -xf Python-3.10.0.tar.xz && \
+    cd Python-3.10.0 && \
+    ./configure --enable-optimizations --with-openssl=/usr/include/openssl && \
     make -j 4 && \
     make altinstall
 
 # Set Python 3.10 as the default Python version
-RUN update-alternatives --install /usr/bin/python3 python3 /usr/local/bin/python3.9 1
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/local/bin/python3.10 1
 
 # Set working directory
 WORKDIR /app
