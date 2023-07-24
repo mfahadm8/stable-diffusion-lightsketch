@@ -12,8 +12,11 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Create a new conda environment with Python 3.10
-RUN conda install -y python=3.10 && \
+RUN conda create -n py310 python=3.10 && \
     conda clean -afy
+
+# Set Python 3.10 as the default Python version
+ENV PATH="/opt/conda/envs/py310/bin:$PATH"
 
 # Set working directory
 WORKDIR /app
