@@ -4,14 +4,23 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A4B469963BF863CC
 
 
-# Install system dependencies and Python 3.10
+
+# Install system dependencies
 RUN apt-get update && \
-    apt-get install -y libglib2.0-0 libsm6 libxrender-dev libxext6 libgl1-mesa-glx python3.10 python3-pip git wget && \
+    apt-get install -y libglib2.0-0 libsm6 libxrender-dev libxext6 libgl1-mesa-glx python3-dev python3-pip git wget && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+# Install Python 3.10 manually
+RUN wget https://www.python.org/ftp/python/3.10.0/Python-3.10.0.tar.xz && \
+    tar -xf Python-3.10.0.tar.xz && \
+    cd Python-3.10.0 && \
+    ./configure --enable-optimizations && \
+    make -j 4 && \
+    make altinstall
+
 # Set Python 3.10 as the default Python version
-RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/local/bin/python3.10 1
 
 # Set working directory
 WORKDIR /app
