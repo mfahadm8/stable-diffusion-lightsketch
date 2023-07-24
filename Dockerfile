@@ -12,7 +12,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Python 3.10 manually
-RUN wget https://www.python.org/ftp/python/3.10.0/Python-3.9.0.tar.xz && \
+RUN wget https://www.python.org/ftp/python/3.9.0/Python-3.9.0.tar.xz && \
     tar -xf Python-3.9.0.tar.xz && \
     cd Python-3.9.0 && \
     ./configure --enable-optimizations && \
