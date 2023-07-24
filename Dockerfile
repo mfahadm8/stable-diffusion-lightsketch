@@ -14,7 +14,7 @@ RUN apt-get update && \
 # Install Python 3.10 manually
 RUN wget https://www.python.org/ftp/python/3.10.0/Python-3.10.0.tar.xz && \
     tar -xf Python-3.10.0.tar.xz && \
-    cd Python-3.9.0 && \
+    cd Python-3.10.0 && \
     ./configure --enable-optimizations && \
     make -j 4 && \
     make altinstall
