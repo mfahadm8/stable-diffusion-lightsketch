@@ -36,4 +36,4 @@ WORKDIR /app
 
 COPY . .
 
-CMD ["bash", "webui.sh", "--api", "--cors-allow-origins", "*"]
+CMD ["python3", "launch.py", "--nowebui","--api", "--cors-allow-origins", "*","--listen","0.0.0.0"]
