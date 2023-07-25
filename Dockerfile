@@ -1,4 +1,4 @@
-FROM pytorch/pytorch:1.13.1-cuda11.6-cudnn8-runtime
+FROM pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime
 
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -36,4 +36,4 @@ WORKDIR /app
 
 COPY . .
 
-CMD ["python3", "launch.py", "--nowebui","--api", "--cors-allow-origins", "*","--listen","0.0.0.0"]
+CMD ["python3", "launch.py", "--nowebui", "--cors-allow-origins", "*","--listen","0.0.0.0"]
