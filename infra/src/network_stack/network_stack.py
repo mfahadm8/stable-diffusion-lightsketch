@@ -48,38 +48,10 @@ class NetworkStack(Stack):
         )
 
     def __push_subnets_route_tables_ids(self):
-        private_subnets = self._vpc.select_subnets(
-            subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS
-        ).subnets
 
         public_subnets = self._vpc.select_subnets(
             subnet_type=ec2.SubnetType.PUBLIC
         ).subnets
-
-        for index, subnet in enumerate(private_subnets):
-            ssm.StringParameter(
-                scope=self,
-                id=f"privateSubnet{index+1}",
-                tier=ssm.ParameterTier.STANDARD,
-                string_value=subnet.subnet_id,
-                parameter_name=self.config["ssm_infra"]+f"privateSubnet{index+1}",
-            )
-
-            ssm.StringParameter(
-                scope=self,
-                id=f"privateRouteTable{index+1}",
-                tier=ssm.ParameterTier.STANDARD,
-                string_value=subnet.route_table.route_table_id,
-                parameter_name=self.config["ssm_infra"]+f"privateRouteTable{index+1}",
-            )
-
-            ssm.StringParameter(
-                scope=self,
-                id=f"privateSubnetAz{index+1}",
-                tier=ssm.ParameterTier.STANDARD,
-                string_value=subnet.availability_zone,
-                parameter_name=self.config["ssm_infra"]+f"privateSubnetAz{index+1}",
-            )
 
         for index, subnet in enumerate(public_subnets):
             ssm.StringParameter(

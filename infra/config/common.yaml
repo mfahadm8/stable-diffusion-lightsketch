@@ -8,11 +8,6 @@ network:
     maxAzs: 3
 
   subnets:
-    # Private subnet
-    - cidrMask: 21
-      name: Private
-      subnetType: PRIVATE_WITH_EGRESS
-    # Client UI subnet
     - cidrMask: 21
       name: Public
       subnetType: PUBLIC
