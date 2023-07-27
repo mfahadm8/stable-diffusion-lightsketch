@@ -9,6 +9,7 @@ from aws_cdk import (
     aws_servicediscovery as servicediscovery,
     aws_elasticloadbalancingv2 as elbv2,
     aws_ssm as ssm,
+    aws_efs,
     aws_logs,
     aws_cloudwatch as cloudwatch,
     Duration,
@@ -32,17 +33,19 @@ class Ecs(Construct):
         id: str,
         config: Dict,
         vpc: ec2.Vpc,
+        efs: aws_efs.FileSystem
     ) -> None:
         super().__init__(scope, id)
         self._config = config
         # Create cluster control plane
-        self.__create_ecs_cluster(vpc)
+        self._vpc = vpc
+        self._efs=efs
+        self.__create_ecs_cluster()
         self.__create_lightsketch_service()
 
 
     def __create_ecs_cluster(self, vpc: ec2.Vpc):
-        # Create ECS cluster
-        self._vpc = vpc
+
         self.cluster_name="lightsketch_cluster_" + self._config["stage"]
         self._cluster = ecs.Cluster(
             self,
@@ -74,7 +77,13 @@ class Ecs(Construct):
             task_role=task_iam_role,
             network_mode=ecs.NetworkMode.BRIDGE
         )
-
+        efs_volume_name = "efs-volume"
+        app_taskdef.add_volume(
+            name=efs_volume_name,
+            efs_volume_configuration=ecs.EfsVolumeConfiguration(
+                file_system_id=self._efs.file_system.file_system_id,
+            ),
+        )
         app_container = app_taskdef.add_container(
             "container",
             image=ecs.ContainerImage.from_ecr_repository(
@@ -96,6 +105,13 @@ class Ecs(Construct):
         )
 
         app_container.add_port_mappings(ecs.PortMapping(host_port=0,container_port=self._config["compute"]["ecs"]["app"]["port"]))
+        app_container.add_mount_points(
+            ecs.MountPoint(
+                source_volume=efs_volume_name,
+                container_path="/efs/app/models",
+                read_only=False,
+            )
+        )
 
 
         user_data=ec2.UserData.for_linux(shebang="#!/usr/bin/bash")
@@ -200,6 +216,24 @@ class Ecs(Construct):
         task_role.add_managed_policy(
             iam.ManagedPolicy.from_aws_managed_policy_name("AmazonS3FullAccess")
         )
+        task_role.add_to_policy(
+             iam.PolicyStatement(
+                actions=[
+                    "elasticfilesystem:ClientRootAccess",
+                    "elasticfilesystem:ClientWrite",
+                    "elasticfilesystem:ClientMount",
+                    "elasticfilesystem:DescribeMountTargets",
+                ],
+                resources=[
+                    f"arn:aws:elasticfilesystem:{self.region}:{self.account}:file-system/{self._efs.file_system.file_system_id}"
+                ],
+            )
+        )
+        task_role.add_to_policy( 
+            iam.PolicyStatement(
+                actions=["ec2:DescribeAvailabilityZones"],
+                resources=["*"],
+            ))
 
         return task_role
 
