@@ -8,9 +8,9 @@ network:
 compute:
   ecs:
     app:
-      repo_arn: "arn:aws:ecr:us-east-1:188775091215:repository/flexfibers"
+      repo_arn: "arn:aws:ecr:us-east-1:188775091215:repository/lightsketch"
       image_tag: "latest"
-      port: 80
+      port: 7861
       minimum_containers: 1
       maximum_containers: 10
       base_memory: 10000

@@ -95,7 +95,7 @@ class Ecs(Construct):
             gpu_count=self._config["compute"]["ecs"]["app"]["cuda"]
         )
 
-        app_container.add_port_mappings(ecs.PortMapping(host_port=0,container_port=8000))
+        app_container.add_port_mappings(ecs.PortMapping(host_port=0,container_port=self._config["compute"]["ecs"]["app"]["port"]))
 
 
         user_data=ec2.UserData.for_linux(shebang="#!/usr/bin/bash")
@@ -128,11 +128,11 @@ class Ecs(Construct):
             self,
             "ECSEC2SpotCapacity",
             vpc=self._vpc,
-            min_capacity=0,
-            desired_capacity=0,
+            min_capacity=self._config["compute"]["ecs"]["app"]["minimum_containers"],
+            desired_capacity=self._config["compute"]["ecs"]["app"]["minimum_containers"],
             max_capacity=self._config["compute"]["ecs"]["app"]["maximum_containers"],
             vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC, one_per_az=True),
-            instance_type=ec2.InstanceType.of(ec2.InstanceClass.G3, ec2.InstanceSize.XLARGE4),
+            instance_type=ec2.InstanceType.of(ec2.InstanceClass.G4DN, ec2.InstanceSize.XLARGE),
             machine_image=ec2.MachineImage.generic_linux(ami_map={"us-east-1": "ami-03a32d185474e28bc"}),
             spot_price="0.50",
             security_group=ec2_security_group,
@@ -159,7 +159,7 @@ class Ecs(Construct):
             "lightsketchapp-service",
             cluster=self._cluster,
             task_definition=app_taskdef,
-            desired_count=0,
+            desired_count=1,
             capacity_provider_strategies = [ecs.CapacityProviderStrategy(capacity_provider=capacity_provider.capacity_provider_name,weight=1)]
         )
 
@@ -218,7 +218,7 @@ class Ecs(Construct):
         )
 
         # Create load balancer
-        lb = elbv2.ApplicationLoadBalancer(
+        self.lb = elbv2.ApplicationLoadBalancer(
             self,
             "LoadBalancer",
             vpc=self._cluster.vpc,
@@ -244,7 +244,7 @@ class Ecs(Construct):
         )
 
         # Create HTTP listener for redirection
-        http_listener = lb.add_listener(
+        http_listener = self.lb.add_listener(
             "HttpListener", port=80, protocol=elbv2.ApplicationProtocol.HTTP,
             default_target_groups=[target_group],
 
