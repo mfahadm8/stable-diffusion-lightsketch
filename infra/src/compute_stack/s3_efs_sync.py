@@ -40,7 +40,7 @@ class S3EfsSyncConstruct(Construct):
 
 
     def __create_efs_s3_sync_lambda(self):
-        efs_mount_path = "/efs/app/models"
+        efs_mount_path = "models"
 
         lambda_func = lambda_.Function(
             self,
