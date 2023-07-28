@@ -82,7 +82,7 @@ class Ecs(Construct):
         app_taskdef.add_volume(
             name=efs_volume_name,
             efs_volume_configuration=ecs.EfsVolumeConfiguration(
-                file_system_id=self._efs.file_system.file_system_id,
+                file_system_id=self._efs.file_system_id,
             ),
         )
         app_container = app_taskdef.add_container(
@@ -245,7 +245,7 @@ class Ecs(Construct):
                     "elasticfilesystem:DescribeMountTargets",
                 ],
                 resources=[
-                    f"arn:aws:elasticfilesystem:{region}:{account}:file-system/{self._efs.file_system.file_system_id}"
+                    f"arn:aws:elasticfilesystem:{region}:{account}:file-system/{self._efs.file_system_id}"
                 ],
             )
         )
