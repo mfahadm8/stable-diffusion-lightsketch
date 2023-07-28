@@ -234,6 +234,8 @@ class Ecs(Construct):
         task_role.add_managed_policy(
             iam.ManagedPolicy.from_aws_managed_policy_name("AmazonS3FullAccess")
         )
+        region=self._config["aws_region"]
+        account=self._config["aws_account"]
         task_role.add_to_policy(
              iam.PolicyStatement(
                 actions=[
@@ -243,7 +245,7 @@ class Ecs(Construct):
                     "elasticfilesystem:DescribeMountTargets",
                 ],
                 resources=[
-                    f"arn:aws:elasticfilesystem:{self.region}:{self.account}:file-system/{self._efs.file_system.file_system_id}"
+                    f"arn:aws:elasticfilesystem:{region}:{account}:file-system/{self._efs.file_system.file_system_id}"
                 ],
             )
         )
