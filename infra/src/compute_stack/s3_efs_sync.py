@@ -64,7 +64,7 @@ class S3EfsSyncConstruct(Construct):
             memory_size=1769,
             ephemeral_storage_size=Size.gibibytes(10),
         )
-        self._s3_bucket.bucket.grant_read(lambda_func)
+        self._s3_bucket.grant_read(lambda_func)
 
 
         lambda_func.add_event_source(aws_lambda_event_sources.S3EventSource(self._s3_bucket,
