@@ -51,7 +51,7 @@ class Ecs(Construct):
             self,
             "lightsketch",
             cluster_name=self.cluster_name,
-            vpc=vpc
+            vpc=self._vpc
         )
         # Create private DNS namespace
         self.namespace = servicediscovery.PrivateDnsNamespace(
