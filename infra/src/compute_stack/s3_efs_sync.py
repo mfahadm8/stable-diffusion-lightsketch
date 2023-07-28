@@ -32,7 +32,7 @@ class S3EfsSyncConstruct(Construct):
         self._vpc = vpc,
         self._s3_bucket=s3_bucket,
         # Create cluster control plane
-        self.__create_efs_s3_sync_lambda(vpc)
+        self.__create_efs_s3_sync_lambda()
 
 
 
