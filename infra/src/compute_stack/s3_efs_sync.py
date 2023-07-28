@@ -47,7 +47,7 @@ class S3EfsSyncConstruct(Construct):
             "LambdaCopyFiles",
             runtime=lambda_.Runtime.PYTHON_3_9,
             handler="index.handler",
-            code=lambda_.Code.from_asset("assets/lambda/testLambda"),
+            code=lambda_.Code.from_asset("src/compute_stack/assets/CopyS3toEfsLambda"),
             environment={
                 "BUCKET_NAME": self._s3_bucket.bucket_name,
                 "EFS_MOUNT": efs_mount_path,
