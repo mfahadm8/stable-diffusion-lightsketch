@@ -46,7 +46,7 @@ class S3EfsSyncConstruct(Construct):
             handler="index.handler",
             code=lambda_.Code.from_asset("assets/lambda/testLambda"),
             environment={
-                "BUCKET_NAME": self._s3_bucket.bucket.bucket_name,
+                "BUCKET_NAME": self._s3_bucket.bucket_name,
                 "EFS_MOUNT": efs_mount_path,
                 "TEMP_DIR": "/tmp/download",
             },
