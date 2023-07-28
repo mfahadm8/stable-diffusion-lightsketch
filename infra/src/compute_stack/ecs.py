@@ -44,7 +44,7 @@ class Ecs(Construct):
         self.__create_lightsketch_service()
 
 
-    def __create_ecs_cluster(self, vpc: ec2.Vpc):
+    def __create_ecs_cluster(self):
 
         self.cluster_name="lightsketch_cluster_" + self._config["stage"]
         self._cluster = ecs.Cluster(
