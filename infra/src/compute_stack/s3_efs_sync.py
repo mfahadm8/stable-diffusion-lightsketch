@@ -8,6 +8,7 @@ from aws_cdk import (
     aws_lambda_event_sources,
     aws_events_targets as events_targets,
     aws_lambda as lambda_,
+    aws_efs as efs,
     Duration,
     Size
 )
@@ -25,19 +26,21 @@ class S3EfsSyncConstruct(Construct):
         id: str,
         config: Dict,
         vpc: ec2.Vpc,
-        s3_bucket: s3.Bucket
+        s3_bucket: s3.Bucket,
+        efs_access_point: efs.AccessPoint
     ) -> None:
         super().__init__(scope, id)
         self._config = config
         self._vpc = vpc,
         self._s3_bucket=s3_bucket,
+        self.efs_access_point=efs_access_point
         # Create cluster control plane
         self.__create_efs_s3_sync_lambda()
 
 
 
     def __create_efs_s3_sync_lambda(self):
-        efs_mount_path = "/mnt/efs-volume-ml-model"
+        efs_mount_path = "/efs/app/models"
 
         lambda_func = lambda_.Function(
             self,
