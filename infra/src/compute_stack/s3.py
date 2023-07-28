@@ -10,7 +10,8 @@ from utils.ssm_util import SsmParameterFetcher
 
 class S3(Construct):
     _config: Dict
-
+    bucket: s3.Bucket
+    
     def __init__(
         self,
         scope: Construct,

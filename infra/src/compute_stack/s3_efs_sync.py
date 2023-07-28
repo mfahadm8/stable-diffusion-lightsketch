@@ -5,6 +5,7 @@ from aws_cdk import (
     aws_ecs as ecs,
     aws_iam as iam,
     aws_s3 as s3,
+    aws_lambda_event_sources,
     aws_events_targets as events_targets,
     aws_lambda as lambda_,
     Duration,
@@ -14,7 +15,7 @@ from typing import Dict
 from constructs import Construct
 
 
-class S3EfsSyncLambda(Construct):
+class S3EfsSyncConstruct(Construct):
     _config: Dict
     _vpc = ec2.IVpc
 
@@ -61,3 +62,9 @@ class S3EfsSyncLambda(Construct):
             ephemeral_storage_size=Size.gibibytes(10),
         )
         self._s3_bucket.bucket.grant_read(lambda_func)
+
+
+        lambda_func.add_event_source(aws_lambda_event_sources.S3EventSource(self._s3_bucket,
+        events=[s3.EventType.OBJECT_CREATED, s3.EventType.OBJECT_CREATED_COMPLETE_MULTIPART_UPLOAD],
+        filters=[s3.NotificationKeyFilter(prefix="models/")]
+    ))

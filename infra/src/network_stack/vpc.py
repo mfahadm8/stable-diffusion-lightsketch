@@ -23,10 +23,13 @@ class Vpc(Construct):
         self.vpc = ec2.Vpc(
             scope=self,
             id=self.config['name'],
-            nat_gateways = 0,
+            nat_gateways = 1,
             subnet_configuration=self.subnet_configuration,
             max_azs=vpc_config['maxAzs'],
             cidr=vpc_config['cidr'],
+            nat_gateway_subnets=ec2.SubnetSelection(
+                subnet_group_name=vpc_config['natGatewaySubnetName']
+            ),
             enable_dns_hostnames=True,
             enable_dns_support=True,
         )
