@@ -68,6 +68,6 @@ class S3EfsSyncConstruct(Construct):
 
 
         lambda_func.add_event_source(aws_lambda_event_sources.S3EventSource(self._s3_bucket,
-        events=[s3.EventType.OBJECT_CREATED, s3.EventType.OBJECT_CREATED_COMPLETE_MULTIPART_UPLOAD],
-        filters=[s3.NotificationKeyFilter(prefix="models/")]
-    ))
+            events=[s3.EventType.OBJECT_CREATED, s3.EventType.OBJECT_CREATED_COMPLETE_MULTIPART_UPLOAD],
+            filters=[s3.NotificationKeyFilter(prefix="models/")]
+        ))
