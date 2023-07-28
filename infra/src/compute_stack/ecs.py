@@ -55,7 +55,7 @@ class Ecs(Construct):
         )
         # Create private DNS namespace
         self.namespace = servicediscovery.PrivateDnsNamespace(
-            self, "Namespace", name="ecs.local", vpc=self._vpc
+            self, "Namespace", name="lightsketch.local", vpc=self._vpc
         )
 
     def __create_lightsketch_service(self):
@@ -149,7 +149,7 @@ class Ecs(Construct):
             peer=ec2.Peer.any_ipv4(),
             connection=ec2.Port.all_tcp(),
         )
-
+            
         self.asg = autoscaling.AutoScalingGroup(
             self,
             "ECSEC2SpotCapacity",
@@ -166,7 +166,20 @@ class Ecs(Construct):
             role=self.__create_ec2_role(),
             key_name=self._config["compute"]["ecs"]["app"]["ec2_keypair"],
             user_data=user_data,
-            new_instances_protected_from_scale_in =False
+            new_instances_protected_from_scale_in =False,
+            block_devices=[
+                # Add the desired root volume size to the block device mappings
+                autoscaling.BlockDevice(
+                    device_name="/dev/xvda",
+                    volume=autoscaling.BlockDeviceVolume.ebs(
+                        volume_size=100,
+                        volume_type=ec2.EbsDeviceVolumeType.GP2,
+                    ),
+                )
+            ],
+            mixed_instances_policy=autoscaling.MixedInstancesPolicy(
+            launch_template_overrides=[autoscaling.LaunchTemplateOverrides(instance_type=ec2.InstanceType("g4dn.xlarge")), autoscaling.LaunchTemplateOverrides(instance_type=ec2.InstanceType("g5.xlarge")), autoscaling.LaunchTemplateOverrides(instance_type=ec2.InstanceType("g3.4xlarge"))]
+        ),
 
         )
         
@@ -194,7 +207,7 @@ class Ecs(Construct):
             placement_constraints=[
                 ecs.PlacementConstraint.distinct_instances()
             ],
-            capacity_provider_strategies = [ecs.CapacityProviderStrategy(capacity_provider=capacity_provider.capacity_provider_name,weight=1)]
+            capacity_provider_strategies = [ecs.CapacityProviderStrategy(capacity_provider=capacity_provider.capacity_provider_name,base=1,weight=1)]
         )
 
         self.__setup_application_load_balancer()
