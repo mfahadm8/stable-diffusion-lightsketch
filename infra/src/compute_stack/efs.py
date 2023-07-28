@@ -38,9 +38,7 @@ class Efs(Construct):
             vpc_subnets=ec2.SubnetSelection(
                 subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS
             ),
-            lifecycle_policy=efs.LifecyclePolicy.AFTER_1_DAY,
             performance_mode=efs.PerformanceMode.GENERAL_PURPOSE,
-            out_of_infrequent_access_policy=efs.OutOfInfrequentAccessPolicy.AFTER_1_ACCESS,
             removal_policy=RemovalPolicy.DESTROY,
         )
 
