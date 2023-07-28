@@ -23,12 +23,12 @@ env = Environment(
 )
 
 network_stack = NetworkStack(
-    app, "NetworkStack-" + config["stage"], config=config, env=env
+    app, "LightSketch-NetworkStack-" + config["stage"], config=config, env=env
 )
 
 compute_stack = ComputeStack(
     app,
-    "ComputeStack-" + config["stage"],
+    "LightSketch-ComputeStack-" + config["stage"],
     vpc=network_stack._vpc,
     config=config,
     env=env,

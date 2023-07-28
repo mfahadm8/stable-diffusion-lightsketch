@@ -13,10 +13,10 @@ setup-codebuild:
 	aws cloudformation deploy --template-file ./cloudformation/codebuild/docker_build.yml --stack-name CodebuildDockerPushStack --region $(REGION) --capabilities CAPABILITY_NAMED_IAM
 
 synth:
-	@cdk synth -c stage=$(STAGE) --output=cdk.out/$(STAGE) $(STACK)-$(STAGE)
+	@cdk synth -c stage=$(STAGE) --output=cdk.out/$(STAGE) LightSketch-$(STACK)-$(STAGE)
 
 deploy:
-	@cdk deploy --app=cdk.out/$(STAGE) $(STACK)-$(STAGE)
+	@cdk deploy --app=cdk.out/$(STAGE) LightSketch-$(STACK)-$(STAGE)
 
 diff:
 	@cdk diff -c stage=$(STAGE) $(STACK)-$(STAGE)
