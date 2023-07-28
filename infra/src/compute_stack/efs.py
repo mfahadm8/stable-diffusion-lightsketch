@@ -26,7 +26,7 @@ class Efs(Construct):
         self._config = config
         self._vpc = vpc
         # Create cluster control plane
-        self.__create_efs(vpc)
+        self.__create_efs()
 
 
     def __create_efs(self):
