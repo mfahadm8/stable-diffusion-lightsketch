@@ -55,7 +55,7 @@ class Ecs(Construct):
         )
         # Create private DNS namespace
         self.namespace = servicediscovery.PrivateDnsNamespace(
-            self, "Namespace", name="ecs.local", vpc=vpc
+            self, "Namespace", name="ecs.local", vpc=self._vpc
         )
 
     def __create_lightsketch_service(self):
