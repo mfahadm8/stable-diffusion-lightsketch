@@ -61,8 +61,7 @@ class S3EfsSyncConstruct(Construct):
                 ap=self.efs_access_point, mount_path=efs_mount_path
             ),
             timeout=Duration.minutes(15),
-            memory_size=1769,
-            ephemeral_storage_size=Size.gibibytes(10),
+            memory_size=1769
         )
         self._s3_bucket.grant_read(lambda_func)
 
