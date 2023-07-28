@@ -29,7 +29,7 @@ class Efs(Construct):
         self.__create_efs(vpc)
 
 
-    def __create_efs(self, vpc: ec2.Vpc):
+    def __create_efs(self):
 
         self.file_system = efs.FileSystem(
             self,

@@ -23,4 +23,4 @@ class ComputeStack(Stack):
         # create the ecs cluster
         self._s3=S3(self,"ModelsBucket",config)
         self._efs=Efs(self,"ModelsEfs",config=config,vpc=vpc)
-        self._ecs=Ecs(self, 'Ecs', config, vpc)
+        self._ecs=Ecs(self, 'Ecs', config, vpc,self._efs.file_system)

@@ -78,6 +78,7 @@ class Ecs(Construct):
             network_mode=ecs.NetworkMode.BRIDGE
         )
         efs_volume_name = "efs-volume"
+        efs_mount_path = "/efs/app/models"
         app_taskdef.add_volume(
             name=efs_volume_name,
             efs_volume_configuration=ecs.EfsVolumeConfiguration(
@@ -101,14 +102,23 @@ class Ecs(Construct):
                     removal_policy=RemovalPolicy.DESTROY,
                 ),
             ),
-            gpu_count=self._config["compute"]["ecs"]["app"]["cuda"]
+            gpu_count=self._config["compute"]["ecs"]["app"]["cuda"],
+            command=["python3","launch.py","--nowebui",
+                     "--hypernetwork-dir",efs_mount_path+"/hypernetworks"
+                     "--codeformer-models-path",efs_mount_path+"/Codeformer",
+                     "--gfpgan-models-path",efs_mount_path+"/GFPGAN",
+                     "--esrgan-models-path",efs_mount_path+"/ESRGAN",
+                     "--bsrgan-models-path",efs_mount_path+"/BSRGAN",
+                     "--realesrgan-models-path",efs_mount_path+"/RealESRGAN",
+                     "--clip-models-path",efs_mount_path+"/CLIP"
+                     ]
         )
 
         app_container.add_port_mappings(ecs.PortMapping(host_port=0,container_port=self._config["compute"]["ecs"]["app"]["port"]))
         app_container.add_mount_points(
             ecs.MountPoint(
                 source_volume=efs_volume_name,
-                container_path="/efs/app/models",
+                container_path=efs_mount_path,
                 read_only=False,
             )
         )
@@ -175,7 +185,15 @@ class Ecs(Construct):
             "lightsketchapp-service",
             cluster=self._cluster,
             task_definition=app_taskdef,
-            desired_count=1,
+            desired_count=1,       
+            placement_strategies=[
+                ecs.PlacementStrategy.spread_across_instances(),
+                ecs.PlacementStrategy.packed_by_cpu(),
+                ecs.PlacementStrategy.randomly()
+            ],
+            placement_constraints=[
+                ecs.PlacementConstraint.distinct_instances()
+            ],
             capacity_provider_strategies = [ecs.CapacityProviderStrategy(capacity_provider=capacity_provider.capacity_provider_name,weight=1)]
         )
 
