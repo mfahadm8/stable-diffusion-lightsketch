@@ -25,5 +25,5 @@ class ComputeStack(Stack):
         self._s3=S3(self,"ModelsBucket",config)
         self._efs=Efs(self,"ModelsEfs",config=config,vpc=vpc)
         self._ecs=Ecs(self, 'Ecs', config, vpc,self._efs.file_system)
-        S3EfsSyncConstruct(self,"S3EfsSync",config,vpc,self._s3.bucket,,self._efs.efs_access_point)
+        S3EfsSyncConstruct(self,"S3EfsSync",config,vpc,self._s3.bucket,self._efs.efs_access_point)
         
