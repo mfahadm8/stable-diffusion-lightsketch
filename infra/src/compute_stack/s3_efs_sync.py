@@ -31,8 +31,8 @@ class S3EfsSyncConstruct(Construct):
     ) -> None:
         super().__init__(scope, id)
         self._config = config
-        self._vpc = vpc,
-        self._s3_bucket=s3_bucket,
+        self._vpc = vpc
+        self._s3_bucket=s3_bucket
         self.efs_access_point=efs_access_point
         # Create cluster control plane
         self.__create_efs_s3_sync_lambda()
