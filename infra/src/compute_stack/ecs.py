@@ -303,7 +303,7 @@ class Ecs(Construct):
                 protocol=elbv2.Protocol.HTTP,
                 interval=Duration.seconds(60),
                 timeout=Duration.seconds(60),
-                healthy_threshold_count=1,
+                healthy_threshold_count=2,
                 unhealthy_threshold_count=5,
             ),
         )
