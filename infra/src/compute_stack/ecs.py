@@ -301,9 +301,9 @@ class Ecs(Construct):
             health_check=elbv2.HealthCheck(
                 path="/sdapi/v1/sd-models",
                 protocol=elbv2.Protocol.HTTP,
-                interval=Duration.seconds(30),
-                timeout=Duration.seconds(20),
-                healthy_threshold_count=5,
+                interval=Duration.seconds(60),
+                timeout=Duration.seconds(60),
+                healthy_threshold_count=1,
                 unhealthy_threshold_count=5,
             ),
         )
