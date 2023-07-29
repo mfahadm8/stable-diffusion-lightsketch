@@ -153,7 +153,8 @@ class Ecs(Construct):
         launch_template = ec2.LaunchTemplate(
             self,
             "LightsketchLaunchTemplate",
-            launch_template_name="LightsketchLaunchTemplate", 
+            launch_template_name="LightsketchLaunchTemplate",
+            associate_public_ip_address =True, 
             block_devices=[
                 ec2.BlockDevice(
                     device_name="/dev/xvda",
@@ -168,8 +169,7 @@ class Ecs(Construct):
             role=self.__create_ec2_role(),
             key_name=self._config["compute"]["ecs"]["app"]["ec2_keypair"],
             user_data=user_data,
-            security_group=ec2_security_group,
-            associate_public_ip_address=True
+            security_group=ec2_security_group
         )
 
         self.asg = autoscaling.AutoScalingGroup(
