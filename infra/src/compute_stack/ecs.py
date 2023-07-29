@@ -151,44 +151,33 @@ class Ecs(Construct):
             connection=ec2.Port.all_tcp(),
         )
 
-        launch_template = ec2.LaunchTemplate(
-            self,
-            "LightsketchLaunchTemplate",
-            launch_template_name="LightsketchLaunchTemplate",
-            block_devices=[
-                ec2.BlockDevice(
-                    device_name="/dev/xvda",
-                    volume=ec2.BlockDeviceVolume.ebs(
-                        volume_size=100,
-                        volume_type=ec2.EbsDeviceVolumeType.GP2,
-                    ),
-                )
-            ],
-            instance_type=ec2.InstanceType.of(ec2.InstanceClass.G4DN, ec2.InstanceSize.XLARGE),
-            machine_image=ec2.MachineImage.generic_linux(ami_map={"us-east-1": "ami-03a32d185474e28bc"}),
-            role=self.__create_ec2_role(),
-            key_name=self._config["compute"]["ecs"]["app"]["ec2_keypair"],
-            user_data=user_data,
-            security_group=ec2_security_group,
-            spot_options= ec2.LaunchTemplateSpotOptions(
-                valid_until=Expiration.after(Duration.days(365))
-            )
-        )
-
         self.asg = autoscaling.AutoScalingGroup(
             self,
             "ECSEC2SpotCapacity",
+            vpc=self._vpc,
             min_capacity=self._config["compute"]["ecs"]["app"]["minimum_containers"],
             desired_capacity=self._config["compute"]["ecs"]["app"]["minimum_containers"],
             max_capacity=self._config["compute"]["ecs"]["app"]["maximum_containers"],
-            vpc=self._vpc,
             vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC, one_per_az=True),
+            instance_type=ec2.InstanceType.of(ec2.InstanceClass.G4DN, ec2.InstanceSize.XLARGE),
+            machine_image=ec2.MachineImage.generic_linux(ami_map={"us-east-1": "ami-03a32d185474e28bc"}),
+            spot_price="0.50",
+            security_group=ec2_security_group,
+            associate_public_ip_address=True,
+            role=self.__create_ec2_role(),
+            key_name=self._config["compute"]["ecs"]["app"]["ec2_keypair"],
+            user_data=user_data,
             new_instances_protected_from_scale_in =False,
-            mixed_instances_policy=autoscaling.MixedInstancesPolicy(
-                launch_template=launch_template,
-                instances_distribution=autoscaling.InstancesDistribution(spot_allocation_strategy=autoscaling.SpotAllocationStrategy.CAPACITY_OPTIMIZED_PRIORITIZED),
-                launch_template_overrides=[autoscaling.LaunchTemplateOverrides(instance_type=ec2.InstanceType("g4dn.xlarge")), autoscaling.LaunchTemplateOverrides(instance_type=ec2.InstanceType("g5.xlarge")), autoscaling.LaunchTemplateOverrides(instance_type=ec2.InstanceType("g3.4xlarge"))]
-            ),
+            block_devices=[
+                # Add the desired root volume size to the block device mappings
+                autoscaling.BlockDevice(
+                    device_name="/dev/xvda",
+                    volume=autoscaling.BlockDeviceVolume.ebs(
+                        volume_size=100,
+                        volume_type=autoscaling.EbsDeviceVolumeType.GP2,
+                    ),
+                )
+            ]
 
         )
         
