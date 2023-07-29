@@ -204,7 +204,8 @@ class Ecs(Construct):
             placement_constraints=[
                 ecs.PlacementConstraint.distinct_instances()
             ],
-            capacity_provider_strategies = [ecs.CapacityProviderStrategy(capacity_provider=capacity_provider.capacity_provider_name,base=1,weight=1)]
+            capacity_provider_strategies = [ecs.CapacityProviderStrategy(capacity_provider=capacity_provider.capacity_provider_name,base=1,weight=1)],
+            health_check_grace_period=Duration.minutes(5)
         )
 
         self.__setup_application_load_balancer()
@@ -298,7 +299,7 @@ class Ecs(Construct):
             protocol=elbv2.ApplicationProtocol.HTTP,
             targets=[self._lightsketch_app_service],
             health_check=elbv2.HealthCheck(
-                path="/healthcheck",
+                path="/sdapi/v1/sd-models",
                 protocol=elbv2.Protocol.HTTP,
                 interval=Duration.seconds(30),
                 timeout=Duration.seconds(20),
