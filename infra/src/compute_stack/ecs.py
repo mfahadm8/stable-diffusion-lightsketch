@@ -16,6 +16,7 @@ from aws_cdk import (
     aws_autoscaling as autoscaling,
     aws_iam as iam,
     RemovalPolicy,
+    Expiration
 )
 from constructs import Construct
 from utils.ssm_util import SsmParameterFetcher
@@ -168,7 +169,10 @@ class Ecs(Construct):
             role=self.__create_ec2_role(),
             key_name=self._config["compute"]["ecs"]["app"]["ec2_keypair"],
             user_data=user_data,
-            security_group=ec2_security_group
+            security_group=ec2_security_group,
+            spot_options= ec2.LaunchTemplateSpotOptions(
+                valid_until=Expiration.after(Duration.days(365))
+            )
         )
 
         self.asg = autoscaling.AutoScalingGroup(
@@ -179,7 +183,6 @@ class Ecs(Construct):
             max_capacity=self._config["compute"]["ecs"]["app"]["maximum_containers"],
             vpc=self._vpc,
             vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC, one_per_az=True),
-            spot_price="0.50",
             new_instances_protected_from_scale_in =False,
             launch_template=launch_template,
             mixed_instances_policy=autoscaling.MixedInstancesPolicy(
