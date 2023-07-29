@@ -149,7 +149,29 @@ class Ecs(Construct):
             peer=ec2.Peer.any_ipv4(),
             connection=ec2.Port.all_tcp(),
         )
-            
+
+        launch_template = ec2.LaunchTemplate(
+            self,
+            "LightsketchLaunchTemplate",
+            launch_template_name="LightsketchLaunchTemplate",  # Give it a name
+            version="1",  # Specify a version for the launch template
+            block_devices=[
+                # Add the desired root volume size to the block device mappings
+                ec2.BlockDevice(
+                    device_name="/dev/xvda",
+                    volume=ec2.BlockDeviceVolume.ebs(
+                        volume_size=100,
+                        volume_type=ec2.EbsDeviceVolumeType.GP2,
+                    ),
+                )
+                # Add more block devices or configurations if needed
+            ],
+            # Other settings for the launch template
+            instance_type=ec2.InstanceType.of(ec2.InstanceClass.G4DN, ec2.InstanceSize.XLARGE),
+            machine_image=ec2.MachineImage.generic_linux(ami_map={"us-east-1": "ami-03a32d185474e28bc"}),
+            # Add more settings as required
+        )
+
         self.asg = autoscaling.AutoScalingGroup(
             self,
             "ECSEC2SpotCapacity",
@@ -158,8 +180,6 @@ class Ecs(Construct):
             desired_capacity=self._config["compute"]["ecs"]["app"]["minimum_containers"],
             max_capacity=self._config["compute"]["ecs"]["app"]["maximum_containers"],
             vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC, one_per_az=True),
-            instance_type=ec2.InstanceType.of(ec2.InstanceClass.G4DN, ec2.InstanceSize.XLARGE),
-            machine_image=ec2.MachineImage.generic_linux(ami_map={"us-east-1": "ami-03a32d185474e28bc"}),
             spot_price="0.50",
             security_group=ec2_security_group,
             associate_public_ip_address=True,
@@ -177,8 +197,9 @@ class Ecs(Construct):
                     ),
                 )
             ],
+            launch_template=launch_template,
             mixed_instances_policy=autoscaling.MixedInstancesPolicy(
-            launch_template_overrides=[autoscaling.LaunchTemplateOverrides(instance_type=ec2.InstanceType("g4dn.xlarge")), autoscaling.LaunchTemplateOverrides(instance_type=ec2.InstanceType("g5.xlarge")), autoscaling.LaunchTemplateOverrides(instance_type=ec2.InstanceType("g3.4xlarge"))]
+            launch_template_overrides=[autoscaling.LaunchTemplateOverrides(instance_type=ec2.InstanceType("g4dn.xlarge")), autoscaling.LaunchTemplateOverrides(instance_type=ec2.InstanceType("g5.xlarge")), autoscaling.LaunchTemplateOverrides(instance_type=ec2.InstanceType("g3.4xlarge"),launch_template=launch_template)]
         ),
 
         )
