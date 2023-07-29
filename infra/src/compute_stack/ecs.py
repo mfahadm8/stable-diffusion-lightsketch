@@ -153,10 +153,8 @@ class Ecs(Construct):
         launch_template = ec2.LaunchTemplate(
             self,
             "LightsketchLaunchTemplate",
-            launch_template_name="LightsketchLaunchTemplate",  # Give it a name
-            version="1",  # Specify a version for the launch template
+            launch_template_name="LightsketchLaunchTemplate", 
             block_devices=[
-                # Add the desired root volume size to the block device mappings
                 ec2.BlockDevice(
                     device_name="/dev/xvda",
                     volume=ec2.BlockDeviceVolume.ebs(
