@@ -168,7 +168,6 @@ class Ecs(Construct):
             role=self.__create_ec2_role(),
             key_name=self._config["compute"]["ecs"]["app"]["ec2_keypair"],
             user_data=user_data,
-            associate_public_ip_address=True,
             security_group=ec2_security_group,
 
         )
@@ -181,6 +180,7 @@ class Ecs(Construct):
             max_capacity=self._config["compute"]["ecs"]["app"]["maximum_containers"],
             vpc=self._vpc,
             vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC, one_per_az=True),
+            associate_public_ip_address=True,
             spot_price="0.50",
             new_instances_protected_from_scale_in =False,
             launch_template=launch_template,
