@@ -38,6 +38,7 @@ class Ecs(Construct):
     ) -> None:
         super().__init__(scope, id)
         self._config = config
+        self._region=self._config["aws_region"]
         # Create cluster control plane
         self._vpc = vpc
         self._efs=efs
@@ -105,7 +106,7 @@ class Ecs(Construct):
             ),
             gpu_count=self._config["compute"]["ecs"]["app"]["cuda"],
             command=["python3","launch.py","--nowebui",
-                     "--hypernetwork-dir",efs_mount_path+"/hypernetworks"
+                     "--hypernetwork-dir",efs_mount_path+"/hypernetworks",
                      "--codeformer-models-path",efs_mount_path+"/Codeformer",
                      "--gfpgan-models-path",efs_mount_path+"/GFPGAN",
                      "--esrgan-models-path",efs_mount_path+"/ESRGAN",
@@ -160,6 +161,9 @@ class Ecs(Construct):
             max_capacity=self._config["compute"]["ecs"]["app"]["maximum_containers"],
             vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC, one_per_az=True),
             instance_type=ec2.InstanceType.of(ec2.InstanceClass.G4DN, ec2.InstanceSize.XLARGE),
+            machine_image=ec2.MachineImage.generic_linux(ami_map={
+                self._region : self._config["compute"]["ecs"]["app"]["amis"][self._region]
+                }),
             machine_image=ec2.MachineImage.generic_linux(ami_map={"us-east-1": "ami-03a32d185474e28bc"}),
             spot_price="0.50",
             security_group=ec2_security_group,
