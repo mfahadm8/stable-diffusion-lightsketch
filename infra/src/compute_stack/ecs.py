@@ -196,12 +196,7 @@ class Ecs(Construct):
             "lightsketchapp-service",
             cluster=self._cluster,
             task_definition=app_taskdef,
-            desired_count=1,       
-            placement_strategies=[
-                ecs.PlacementStrategy.spread_across_instances(),
-                ecs.PlacementStrategy.packed_by_cpu(),
-                ecs.PlacementStrategy.randomly()
-            ],
+            desired_count=1,  
             placement_constraints=[
                 ecs.PlacementConstraint.distinct_instances()
             ],
