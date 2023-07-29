@@ -302,7 +302,7 @@ class Ecs(Construct):
                 path="/sdapi/v1/sd-models",
                 protocol=elbv2.Protocol.HTTP,
                 interval=Duration.seconds(60),
-                timeout=Duration.seconds(60),
+                timeout=Duration.seconds(30),
                 healthy_threshold_count=2,
                 unhealthy_threshold_count=5,
             ),
