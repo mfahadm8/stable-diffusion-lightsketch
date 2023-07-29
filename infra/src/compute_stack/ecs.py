@@ -184,7 +184,6 @@ class Ecs(Construct):
             vpc=self._vpc,
             vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC, one_per_az=True),
             new_instances_protected_from_scale_in =False,
-            launch_template=launch_template,
             mixed_instances_policy=autoscaling.MixedInstancesPolicy(
                 launch_template=launch_template,
                 launch_template_overrides=[autoscaling.LaunchTemplateOverrides(instance_type=ec2.InstanceType("g4dn.xlarge"),launch_template=launch_template), autoscaling.LaunchTemplateOverrides(instance_type=ec2.InstanceType("g5.xlarge"),launch_template=launch_template), autoscaling.LaunchTemplateOverrides(instance_type=ec2.InstanceType("g3.4xlarge"),launch_template=launch_template)]
