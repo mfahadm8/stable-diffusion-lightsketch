@@ -164,7 +164,8 @@ class Ecs(Construct):
                 )
             ],
             instance_type=ec2.InstanceType.of(ec2.InstanceClass.G4DN, ec2.InstanceSize.XLARGE),
-            machine_image=ec2.MachineImage.generic_linux(ami_map={"us-east-1": "ami-03a32d185474e28bc"})
+            machine_image=ec2.MachineImage.generic_linux(ami_map={"us-east-1": "ami-03a32d185474e28bc"}),
+            role=self.__create_ec2_role(),
             
         )
 
@@ -179,7 +180,6 @@ class Ecs(Construct):
             spot_price="0.50",
             security_group=ec2_security_group,
             associate_public_ip_address=True,
-            role=self.__create_ec2_role(),
             key_name=self._config["compute"]["ecs"]["app"]["ec2_keypair"],
             user_data=user_data,
             new_instances_protected_from_scale_in =False,
