@@ -173,7 +173,7 @@ class Ecs(Construct):
                     device_name="/dev/xvda",
                     volume=autoscaling.BlockDeviceVolume.ebs(
                         volume_size=100,
-                        volume_type=ec2.EbsDeviceVolumeType.GP2,
+                        volume_type=autoscaling.EbsDeviceVolumeType.GP2,
                     ),
                 )
             ],
