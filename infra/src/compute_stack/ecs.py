@@ -164,7 +164,6 @@ class Ecs(Construct):
             machine_image=ec2.MachineImage.generic_linux(ami_map={
                 self._region : self._config["compute"]["ecs"]["app"]["amis"][self._region]
                 }),
-            machine_image=ec2.MachineImage.generic_linux(ami_map={"us-east-1": "ami-03a32d185474e28bc"}),
             spot_price="0.50",
             security_group=ec2_security_group,
             associate_public_ip_address=True,
