@@ -80,7 +80,7 @@ class Ecs(Construct):
             network_mode=ecs.NetworkMode.BRIDGE
         )
         efs_volume_name = "efs-volume"
-        efs_mount_path = "/efs/app/models"
+        efs_mount_path = "/mnt/app/models"
         app_taskdef.add_volume(
             name=efs_volume_name,
             efs_volume_configuration=ecs.EfsVolumeConfiguration(

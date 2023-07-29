@@ -40,7 +40,7 @@ class S3EfsSyncConstruct(Construct):
 
 
     def __create_efs_s3_sync_lambda(self):
-        efs_mount_path = "/mnt/models"
+        efs_mount_path = "/mnt/app"
 
         lambda_func = lambda_.Function(
             self,
@@ -56,6 +56,9 @@ class S3EfsSyncConstruct(Construct):
             vpc=self._vpc,
             vpc_subnets=ec2.SubnetSelection(
                 subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS
+            ),            
+            filesystem=lambda_.FileSystem.from_efs_access_point(
+                ap=self.efs_access_point, mount_path=efs_mount_path
             ),
             timeout=Duration.minutes(15),
             memory_size=1769
