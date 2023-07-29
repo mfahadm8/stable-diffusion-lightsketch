@@ -164,12 +164,10 @@ class Ecs(Construct):
                         volume_type=ec2.EbsDeviceVolumeType.GP2,
                     ),
                 )
-                # Add more block devices or configurations if needed
             ],
-            # Other settings for the launch template
             instance_type=ec2.InstanceType.of(ec2.InstanceClass.G4DN, ec2.InstanceSize.XLARGE),
-            machine_image=ec2.MachineImage.generic_linux(ami_map={"us-east-1": "ami-03a32d185474e28bc"}),
-            # Add more settings as required
+            machine_image=ec2.MachineImage.generic_linux(ami_map={"us-east-1": "ami-03a32d185474e28bc"})
+            
         )
 
         self.asg = autoscaling.AutoScalingGroup(
