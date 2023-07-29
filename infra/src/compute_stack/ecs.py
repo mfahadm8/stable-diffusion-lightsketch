@@ -154,7 +154,6 @@ class Ecs(Construct):
             self,
             "LightsketchLaunchTemplate",
             launch_template_name="LightsketchLaunchTemplate",
-            associate_public_ip_address =True, 
             block_devices=[
                 ec2.BlockDevice(
                     device_name="/dev/xvda",
