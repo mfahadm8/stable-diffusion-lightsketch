@@ -195,8 +195,9 @@ class Ecs(Construct):
             ],
             launch_template=launch_template,
             mixed_instances_policy=autoscaling.MixedInstancesPolicy(
-            launch_template_overrides=[autoscaling.LaunchTemplateOverrides(instance_type=ec2.InstanceType("g4dn.xlarge"),launch_template=launch_template), autoscaling.LaunchTemplateOverrides(instance_type=ec2.InstanceType("g5.xlarge"),launch_template=launch_template), autoscaling.LaunchTemplateOverrides(instance_type=ec2.InstanceType("g3.4xlarge"),launch_template=launch_template)]
-        ),
+                launch_template=launch_template,
+                launch_template_overrides=[autoscaling.LaunchTemplateOverrides(instance_type=ec2.InstanceType("g4dn.xlarge"),launch_template=launch_template), autoscaling.LaunchTemplateOverrides(instance_type=ec2.InstanceType("g5.xlarge"),launch_template=launch_template), autoscaling.LaunchTemplateOverrides(instance_type=ec2.InstanceType("g3.4xlarge"),launch_template=launch_template)]
+            ),
 
         )
         
