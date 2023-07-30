@@ -20,13 +20,13 @@ def handler(events, context):
         efs_file_path = f"{EFS_MOUNT}/{s3_file_path}"
         tmp_folder_path = os.path.dirname(local_temp_file)
         os.makedirs(tmp_folder_path, exist_ok=True)
-        efs_folder_path = os.path.dirname(local_temp_file)
+        efs_folder_path = os.path.dirname(efs_file_path)
         os.makedirs(efs_folder_path, exist_ok=True)
         logger.info(s3_file_path)
         with open(local_temp_file, "wb") as f:
             s3.download_fileobj(bucket_name, s3_file_path, f)
 
-        os.system(f"cp {local_temp_file} {efs_file_path}")
+        os.system(f"cp {local_temp_file} {efs_folder_path}")
 
         logger.info(os.system(f"ls -la {EFS_MOUNT}"))
 
