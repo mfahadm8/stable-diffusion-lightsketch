@@ -1,7 +1,7 @@
 import logging
 import os
 import boto3
-
+import urllib.parse
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
@@ -14,8 +14,8 @@ TEMP_DIR = os.getenv("TEMP_DIR","/tmp")
 def handler(events, context):
     logger.info(events)
     for record in events["Records"]:
-        bucket_name=record["s3"]["bucket"]["name"]
-        s3_file_path=record["s3"]["object"]["key"]
+        bucket_name=urllib.parse.unquote(record["s3"]["bucket"]["name"])
+        s3_file_path=urllib.parse.unquote(record["s3"]["object"]["key"])
         local_temp_file = f"{TEMP_DIR}/{s3_file_path}"
         efs_file_path = f"{EFS_MOUNT}/{s3_file_path}"
         tmp_folder_path = os.path.dirname(local_temp_file)
