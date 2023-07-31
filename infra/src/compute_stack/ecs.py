@@ -107,13 +107,7 @@ class Ecs(Construct):
             gpu_count=self._config["compute"]["ecs"]["app"]["cuda"],
             command=["bash","webui.sh","--nowebui",
                      "--no-gradio-queue",
-                     "--hypernetwork-dir",efs_mount_path+"/hypernetworks",
-                     "--codeformer-models-path",efs_mount_path+"/Codeformer",
-                     "--gfpgan-models-path",efs_mount_path+"/GFPGAN",
-                     "--esrgan-models-path",efs_mount_path+"/ESRGAN",
-                     "--bsrgan-models-path",efs_mount_path+"/BSRGAN",
-                     "--realesrgan-models-path",efs_mount_path+"/RealESRGAN",
-                     "--clip-models-path",efs_mount_path+"/CLIP"
+                     "--ckpt-dir",efs_mount_path+"/StableDiffusion",
                      ]
         )
 
