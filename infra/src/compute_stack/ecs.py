@@ -20,6 +20,8 @@ from aws_cdk import (
 )
 from constructs import Construct
 from utils.ssm_util import SsmParameterFetcher
+import base64
+import json
 
 
 class Ecs(Construct):
@@ -120,32 +122,34 @@ class Ecs(Construct):
             )
         )
 
-        cloudWatchAgentConfig = """
+        cloudwatch_agent_config = """
         {
-        "metrics": {
-            "metrics_collected": {
-            "nvidia_gpu": {
-                "measurement": [
-                {"name": "memory_total", "rename": "nvidia_smi_memory_total", "unit": "Megabytes"},
-                {"name": "memory_used", "rename": "nvidia_smi_memory_used", "unit": "Megabytes"},
-                {"name": "memory_free", "rename": "nvidia_smi_memory_free", "unit": "Megabytes"}
-                ],
-                "metrics_collection_interval": 60
+            "metrics": {
+                "metrics_collected": {
+                    "nvidia_gpu": {
+                        "measurement": [
+                            {"name": "memory_total", "rename": "nvidia_smi_memory_total", "unit": "Megabytes"},
+                            {"name": "memory_used", "rename": "nvidia_smi_memory_used", "unit": "Megabytes"},
+                            {"name": "memory_free", "rename": "nvidia_smi_memory_free", "unit": "Megabytes"}
+                        ],
+                        "metrics_collection_interval": 60
+                    }
+                },
+                "append_dimensions": {
+                    "ImageId": "${{aws:ImageId}}",
+                    "InstanceId": "${{aws:InstanceId}}",
+                    "InstanceType": "${{aws:InstanceType}}",
+                    "AutoScalingGroupName": "${{aws:AutoScalingGroupName}}"
+                }
             }
-            },
-            "append_dimensions": {
-            "ImageId": "\${aws:ImageId}",
-            "InstanceId": "\${aws:InstanceId}",
-            "InstanceType": "\${aws:InstanceType}",
-            "AutoScalingGroupName": "\${aws:AutoScalingGroupName}"
-            }
-        }
         }
         """
+        # Encode the configuration script in base64 and escape all quotes and newlines
+        encoded_cloudwatch_agent_config = base64.b64encode(json.dumps(cloudwatch_agent_config).encode('utf-8')).decode('utf-8').replace('\n', '')
 
-        user_data=ec2.UserData.for_linux(shebang="#!/usr/bin/bash")
-        user_data_script = f"""#!/usr/bin/bash
-        echo ECS_CLUSTER={self.cluster_name} >> /etc/ecs/ecs.config
+        user_data = ec2.UserData.for_linux(shebang="#!/usr/bin/bash")
+        user_data_script = """#!/usr/bin/bash
+        echo ECS_CLUSTER={} >> /etc/ecs/ecs.config
         sudo iptables --insert FORWARD 1 --in-interface docker+ --destination 169.254.169.254/32 --jump DROP
         sudo service iptables save
         echo ECS_ENABLE_SPOT_INSTANCE_DRAINING=true >> /etc/ecs/ecs.config
@@ -155,7 +159,11 @@ class Ecs(Construct):
         sudo amazon-linux-extras install -y amazon-ssm-agent
         sudo systemctl start amazon-ssm-agent
         sudo systemctl enable amazon-ssm-agent
-        """
+        echo '{}' | base64 -d > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+        /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+        /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a start
+        """.format(encoded_cloudwatch_agent_config)
+
         user_data.add_commands(user_data_script)
 
         ec2_security_group = ec2.SecurityGroup(
@@ -245,7 +253,9 @@ class Ecs(Construct):
         role.add_managed_policy(
             iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AmazonEC2RoleforSSM")
             )
-        # Add additional policies if needed
+        role.add_managed_policy(
+            iam.ManagedPolicy.from_aws_managed_policy_name("CloudWatchAgentServerPolicy")
+        )
 
         return role
     
@@ -331,7 +341,7 @@ class Ecs(Construct):
 
         )
 
-    def __create_lightsketch_service(self):
+    def __configure_autoscaling(self):
 
         # Add GPU VRAM scaling based on the CloudWatch metrics
         gpu_vram_metric = cloudwatch.Metric(
@@ -360,10 +370,30 @@ class Ecs(Construct):
             "GPUVRAMScaling",
             alarm=gpu_vram_alarm,
             scaling_steps=[
-                # Define scaling steps here based on the GPU VRAM metric values
-                # For example:
                 autoscaling.ScalingInterval(change=+1, lower=100),
                 autoscaling.ScalingInterval(change=+2, lower=200),
             ],
-            cooldown=Duration.minutes(5),  # Add a cooldown period to prevent rapid scaling
+            cooldown=Duration.minutes(1), 
+        )
+        gpu_scaling = autoscaling.ScalableTarget(
+            self,
+            "gpu-vram-scaling",
+            service_namespace=autoscaling.ServiceNamespace.ECS,
+            resource_id=f"service/{self._cluster.cluster_name}/{self._lightsketch_app_service.service_name}",
+            scalable_dimension="ecs:service:DesiredCount",
+            min_capacity=self._config["compute"]["ecs"]["app"]["minimum_containers"],
+            max_capacity=self._config["compute"]["ecs"]["app"]["maximum_containers"],
+        )
+
+        gpu_scaling.scale_on_metric(
+            "ScaleToGPURAMUsage",
+            metric=gpu_vram_metric,
+            scaling_steps=[
+                autoscaling.ScalingInterval(change=+1, lower=50),
+                autoscaling.ScalingInterval(change=+2, lower=70),
+                autoscaling.ScalingInterval(change=+3, lower=90),
+            ],
+            evaluation_periods=2,
+            cooldown=Duration.minutes(5),
+            adjustment_type=autoscaling.AdjustmentType.CHANGE_IN_CAPACITY
         )
