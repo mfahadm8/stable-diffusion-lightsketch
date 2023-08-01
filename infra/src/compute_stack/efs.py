@@ -45,7 +45,6 @@ class Efs(Construct):
         self.efs_access_point = self.file_system.add_access_point(
             "EfsAccessPoint",
             create_acl=efs.Acl(owner_uid="0", owner_gid="0", permissions="777"),
-            path="/efs",
             posix_user=efs.PosixUser(uid="0", gid="0"),
         )
 
