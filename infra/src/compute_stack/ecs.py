@@ -120,6 +120,28 @@ class Ecs(Construct):
             )
         )
 
+        cloudWatchAgentConfig = """
+        {
+        "metrics": {
+            "metrics_collected": {
+            "nvidia_gpu": {
+                "measurement": [
+                {"name": "memory_total", "rename": "nvidia_smi_memory_total", "unit": "Megabytes"},
+                {"name": "memory_used", "rename": "nvidia_smi_memory_used", "unit": "Megabytes"},
+                {"name": "memory_free", "rename": "nvidia_smi_memory_free", "unit": "Megabytes"}
+                ],
+                "metrics_collection_interval": 60
+            }
+            },
+            "append_dimensions": {
+            "ImageId": "\${aws:ImageId}",
+            "InstanceId": "\${aws:InstanceId}",
+            "InstanceType": "\${aws:InstanceType}",
+            "AutoScalingGroupName": "\${aws:AutoScalingGroupName}"
+            }
+        }
+        }
+        """
 
         user_data=ec2.UserData.for_linux(shebang="#!/usr/bin/bash")
         user_data_script = f"""#!/usr/bin/bash
@@ -307,4 +329,41 @@ class Ecs(Construct):
             "HttpListener", port=80, protocol=elbv2.ApplicationProtocol.HTTP,
             default_target_groups=[target_group],
 
+        )
+
+    def __create_lightsketch_service(self):
+
+        # Add GPU VRAM scaling based on the CloudWatch metrics
+        gpu_vram_metric = cloudwatch.Metric(
+            namespace="AWS/EC2Spot",
+            metric_name="AvailableGPUMemoryMiB",
+            dimensions={
+                "AutoScalingGroupName": self.asg.auto_scaling_group_name
+            },
+            period=Duration.minutes(1),
+            statistic="Average"
+        )
+
+        # Create a CloudWatch alarm for GPU VRAM usage
+        gpu_vram_alarm = cloudwatch.Alarm(
+            self,
+            "GPUVRAMAlarm",
+            metric=gpu_vram_metric,
+            threshold=90,  # Adjust the threshold as per your requirement
+            evaluation_periods=2,
+            datapoints_to_alarm=2,
+            comparison_operator=cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+        )
+
+        # Attach the GPU VRAM alarm to the auto-scaling group
+        self.asg.scale_on_alarm(
+            "GPUVRAMScaling",
+            alarm=gpu_vram_alarm,
+            scaling_steps=[
+                # Define scaling steps here based on the GPU VRAM metric values
+                # For example:
+                autoscaling.ScalingInterval(change=+1, lower=100),
+                autoscaling.ScalingInterval(change=+2, lower=200),
+            ],
+            cooldown=Duration.minutes(5),  # Add a cooldown period to prevent rapid scaling
         )
