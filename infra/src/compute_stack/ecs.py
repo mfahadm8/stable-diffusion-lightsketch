@@ -347,7 +347,7 @@ class Ecs(Construct):
         gpu_vram_metric = cloudwatch.Metric(
             namespace="AWS/EC2Spot",
             metric_name="AvailableGPUMemoryMiB",
-            dimensions={
+            dimensions_map={
                 "AutoScalingGroupName": self.asg.auto_scaling_group_name
             },
             period=Duration.minutes(1),
