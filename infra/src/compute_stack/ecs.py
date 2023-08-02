@@ -233,7 +233,7 @@ class Ecs(Construct):
         )
 
         self.__setup_application_load_balancer()
-
+        self.__configure_autoscaling()
 
     def __create_ec2_role(self) -> iam.Role:
         # Create IAM role for EC2 instances
@@ -354,46 +354,46 @@ class Ecs(Construct):
             statistic="Average"
         )
 
-        # Create a CloudWatch alarm for GPU VRAM usage
-        gpu_vram_alarm = cloudwatch.Alarm(
-            self,
-            "GPUVRAMAlarm",
-            metric=gpu_vram_metric,
-            threshold=90,  # Adjust the threshold as per your requirement
-            evaluation_periods=2,
-            datapoints_to_alarm=2,
-            comparison_operator=cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
-        )
+        # # Create a CloudWatch alarm for GPU VRAM usage
+        # gpu_vram_alarm = cloudwatch.Alarm(
+        #     self,
+        #     "GPUVRAMAlarm",
+        #     metric=gpu_vram_metric,
+        #     threshold=90,  # Adjust the threshold as per your requirement
+        #     evaluation_periods=2,
+        #     datapoints_to_alarm=2,
+        #     comparison_operator=cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+        # )
 
-        # Attach the GPU VRAM alarm to the auto-scaling group
-        self.asg.scale_on_alarm(
-            "GPUVRAMScaling",
-            alarm=gpu_vram_alarm,
-            scaling_steps=[
-                autoscaling.ScalingInterval(change=+1, lower=100),
-                autoscaling.ScalingInterval(change=+2, lower=200),
-            ],
-            cooldown=Duration.minutes(1), 
-        )
-        gpu_scaling = autoscaling.ScalableTarget(
-            self,
-            "gpu-vram-scaling",
-            service_namespace=autoscaling.ServiceNamespace.ECS,
-            resource_id=f"service/{self._cluster.cluster_name}/{self._lightsketch_app_service.service_name}",
-            scalable_dimension="ecs:service:DesiredCount",
-            min_capacity=self._config["compute"]["ecs"]["app"]["minimum_containers"],
-            max_capacity=self._config["compute"]["ecs"]["app"]["maximum_containers"],
-        )
+        # # Attach the GPU VRAM alarm to the auto-scaling group
+        # self.asg.scale_on_alarm(
+        #     "GPUVRAMScaling",
+        #     alarm=gpu_vram_alarm,
+        #     scaling_steps=[
+        #         autoscaling.ScalingInterval(change=+1, lower=100),
+        #         autoscaling.ScalingInterval(change=+2, lower=200),
+        #     ],
+        #     cooldown=Duration.minutes(1), 
+        # )
+        # gpu_scaling = autoscaling.ScalableTarget(
+        #     self,
+        #     "gpu-vram-scaling",
+        #     service_namespace=autoscaling.ServiceNamespace.ECS,
+        #     resource_id=f"service/{self._cluster.cluster_name}/{self._lightsketch_app_service.service_name}",
+        #     scalable_dimension="ecs:service:DesiredCount",
+        #     min_capacity=self._config["compute"]["ecs"]["app"]["minimum_containers"],
+        #     max_capacity=self._config["compute"]["ecs"]["app"]["maximum_containers"],
+        # )
 
-        gpu_scaling.scale_on_metric(
-            "ScaleToGPURAMUsage",
-            metric=gpu_vram_metric,
-            scaling_steps=[
-                autoscaling.ScalingInterval(change=+1, lower=50),
-                autoscaling.ScalingInterval(change=+2, lower=70),
-                autoscaling.ScalingInterval(change=+3, lower=90),
-            ],
-            evaluation_periods=2,
-            cooldown=Duration.minutes(5),
-            adjustment_type=autoscaling.AdjustmentType.CHANGE_IN_CAPACITY
-        )
+        # gpu_scaling.scale_on_metric(
+        #     "ScaleToGPURAMUsage",
+        #     metric=gpu_vram_metric,
+        #     scaling_steps=[
+        #         autoscaling.ScalingInterval(change=+1, lower=50),
+        #         autoscaling.ScalingInterval(change=+2, lower=70),
+        #         autoscaling.ScalingInterval(change=+3, lower=90),
+        #     ],
+        #     evaluation_periods=2,
+        #     cooldown=Duration.minutes(5),
+        #     adjustment_type=autoscaling.AdjustmentType.CHANGE_IN_CAPACITY
+        # )
