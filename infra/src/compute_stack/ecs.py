@@ -82,7 +82,7 @@ class Ecs(Construct):
             network_mode=ecs.NetworkMode.BRIDGE
         )
         efs_volume_name = "efs-volume"
-        efs_mount_path = "/mnt/app/models"
+        efs_mount_path = "/mnt/app"
         app_taskdef.add_volume(
             name=efs_volume_name,
             efs_volume_configuration=ecs.EfsVolumeConfiguration(
@@ -109,7 +109,7 @@ class Ecs(Construct):
             gpu_count=self._config["compute"]["ecs"]["app"]["cuda"],
             command=["bash","webui.sh","--nowebui",
                      "--no-gradio-queue",
-                     "--ckpt-dir",efs_mount_path+"/StableDiffusion",
+                     "--ckpt-dir",efs_mount_path+"/models/StableDiffusion",
                      ]
         )
 
