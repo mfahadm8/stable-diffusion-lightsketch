@@ -16,3 +16,13 @@ compute:
       base_memory: 10000
       cuda: 1
       ec2_keypair: dev
+
+    training:
+      repo_arn: "arn:aws:ecr:us-east-1:188775091215:repository/lightsketch-training"
+      image_tag: "latest"
+      port: 7861
+      minimum_containers: 1
+      maximum_containers: 3
+      base_memory: 10000
+      cuda: 1
+      ec2_keypair: dev
