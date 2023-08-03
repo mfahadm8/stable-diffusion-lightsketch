@@ -159,10 +159,11 @@ class Ecs(Construct):
         sudo amazon-linux-extras install -y amazon-ssm-agent
         sudo systemctl start amazon-ssm-agent
         sudo systemctl enable amazon-ssm-agent
-        echo '{}' | base64 -d > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+        sudo yum install -y amazon-cloudwatch-agent
+        echo '{}' > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
         /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
         /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a start
-        """.format(self.cluster_name ,encoded_cloudwatch_agent_config)
+        """.format(self.cluster_name ,cloudwatch_agent_config)
 
         user_data.add_commands(user_data_script)
 
