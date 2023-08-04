@@ -5,6 +5,7 @@ from aws_cdk import (
     aws_ecs as ecs,
     aws_ecr as ecr,
     aws_elasticloadbalancingv2 as elb2,
+    aws_elasticloadbalancingv2_targets as targets,
     aws_ecs_patterns as ecs_patterns,
     aws_servicediscovery as servicediscovery,
     aws_elasticloadbalancingv2 as elbv2,
@@ -285,8 +286,8 @@ class Ecs(Construct):
             health_check_grace_period=Duration.minutes(5)
         )
 
-        self.__setup_application_load_balancer()
-        self.__configure_app_service_autoscaling_rule()
+
+        self.__configure_training_service_autoscaling_rule()
 
     def __create_lightsketch_app_service(self):
         # Create EC2 service for ui
@@ -303,7 +304,6 @@ class Ecs(Construct):
             health_check_grace_period=Duration.minutes(5)
         )
 
-        self.__setup_application_load_balancer()
         self.__configure_app_service_autoscaling_rule()
 
     def __create_ec2_role(self) -> iam.Role:
@@ -442,7 +442,7 @@ class Ecs(Construct):
         )
 
         # Create HTTP listener for redirection
-        http_listener = self.lb.add_listener(
+        self.lb_http_listener = self.lb.add_listener(
             "HttpListener", port=80, protocol=elbv2.ApplicationProtocol.HTTP,
             default_target_groups=[app_target_group],
 
@@ -458,7 +458,7 @@ class Ecs(Construct):
             protocol=elbv2.ApplicationProtocol.HTTP,
             targets=[self._lightsketch_training_service],
             health_check=elbv2.HealthCheck(
-                path="/sdapi/v1/sd-models",
+                path="training/",
                 protocol=elbv2.Protocol.HTTP,
                 interval=Duration.seconds(60),
                 timeout=Duration.seconds(30),
@@ -466,13 +466,48 @@ class Ecs(Construct):
                 unhealthy_threshold_count=5,
             ),
         )
+        
+        # Create the listener rule
+        rule = elbv2.CfnListenerRule(
+            self,
+            "ListenerRule",
+            listener_arn=self.lb_http_listener.listener_arn,
+            priority=1,
+            actions=[
+                elbv2.CfnListenerRule.ActionProperty(
+                    type="forward",
+                    target_group_arn =training_target_group.target_group_arn,
+                )
+            ],
+            conditions=[
+                elbv2.CfnListenerRule.RuleConditionProperty(
+                    field="path-pattern",
+                    values=["/training/*"],
+                )
+            ],
+        )
+
+        rule.add_dependency(training_target_group.node.default_child)
 
 
+
+    def __configure_training_service_autoscaling_rule(self):
+
+        # Add GPU VRAM scaling based on the CloudWatch metrics
+        gpu_vram_metric = cloudwatch.Metric(
+            namespace="CWAgent",
+            metric_name="AvailableGPUMemoryMiB",
+            dimensions_map={
+                "AutoScalingGroupName": self.asg.auto_scaling_group_name
+            },
+            period=Duration.minutes(1),
+            statistic="Average"
+        )
     def __configure_app_service_autoscaling_rule(self):
 
         # Add GPU VRAM scaling based on the CloudWatch metrics
         gpu_vram_metric = cloudwatch.Metric(
-            namespace="AWS/EC2Spot",
+            namespace="CWAgent",
             metric_name="AvailableGPUMemoryMiB",
             dimensions_map={
                 "AutoScalingGroupName": self.asg.auto_scaling_group_name
