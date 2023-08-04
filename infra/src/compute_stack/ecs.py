@@ -50,6 +50,9 @@ class Ecs(Construct):
         self.__configure_ec2_autoscaling_group()
         self.__create_lightsketch_app_service()
         self.__create_lightsketch_training_service()
+        self.__setup_application_load_balancer()
+        self.__setup_application_app_service_load_balancer_rule()
+        self.__setup_application_training_service_load_balancer_rule()
         
 
 
@@ -269,9 +272,9 @@ class Ecs(Construct):
 
     def __create_lightsketch_training_service(self):
         # Create EC2 service for ui
-        self._lightsketch_app_service = ecs.Ec2Service(
+        self._lightsketch_training_service = ecs.Ec2Service(
             self,
-            "lightsketchapp-service",
+            "lightsketchtraining-service",
             cluster=self._cluster,
             task_definition=self.training_taskdef,
             desired_count=1,  
@@ -420,8 +423,9 @@ class Ecs(Construct):
             security_group=lb_security_group,
         )
 
+    def __setup_application_app_service_load_balancer_rule(self):
         # Create target group
-        target_group = elbv2.ApplicationTargetGroup(
+        app_target_group = elbv2.ApplicationTargetGroup(
             self,
             "TargetGroup",
             vpc=self._cluster.vpc,
@@ -440,9 +444,29 @@ class Ecs(Construct):
         # Create HTTP listener for redirection
         http_listener = self.lb.add_listener(
             "HttpListener", port=80, protocol=elbv2.ApplicationProtocol.HTTP,
-            default_target_groups=[target_group],
+            default_target_groups=[app_target_group],
 
         )
+
+
+    def __setup_application_training_service_load_balancer_rule(self):
+        # Create target group
+        training_target_group = elbv2.ApplicationTargetGroup(
+            self,
+            "TargetGroup",
+            vpc=self._cluster.vpc,
+            protocol=elbv2.ApplicationProtocol.HTTP,
+            targets=[self._lightsketch_training_service],
+            health_check=elbv2.HealthCheck(
+                path="/sdapi/v1/sd-models",
+                protocol=elbv2.Protocol.HTTP,
+                interval=Duration.seconds(60),
+                timeout=Duration.seconds(30),
+                healthy_threshold_count=2,
+                unhealthy_threshold_count=5,
+            ),
+        )
+
 
     def __configure_app_service_autoscaling_rule(self):
 
