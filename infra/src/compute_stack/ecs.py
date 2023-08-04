@@ -45,7 +45,12 @@ class Ecs(Construct):
         self._vpc = vpc
         self._efs=efs
         self.__create_ecs_cluster()
-        self.__create_lightsketch_service()
+        self.__create_lightsketch_app_container_def()
+        self.__create_lightsketch_training_container_def()
+        self.__configure_ec2_autoscaling_group()
+        self.__create_lightsketch_app_service()
+        self.__create_lightsketch_training_service()
+        
 
 
     def __create_ecs_cluster(self):
@@ -62,7 +67,50 @@ class Ecs(Construct):
             self, "Namespace", name="lightsketch.local", vpc=self._vpc
         )
 
-    def __create_lightsketch_service(self):
+    def __create_lightsketch_training_container_def(self):
+
+        # Import ECR repository for ui
+
+        lightsketch_training_repository = ecr.Repository.from_repository_arn(
+            self,
+            "lightsketchTrainingECRRepo",
+            repository_arn=self._config["compute"]["ecs"]["training"]["repo_arn"],
+        )
+
+        task_iam_role = self.__create_training_taskdef_role()
+
+        # Create EC2 task definition for ui
+        self.training_taskdef = ecs.Ec2TaskDefinition(
+            self,
+            "lightsketch-training-taskdef",
+            task_role=task_iam_role,
+            network_mode=ecs.NetworkMode.BRIDGE
+        )
+
+        training_container = self.training_taskdef.add_container(
+            "container",
+            image=ecs.ContainerImage.from_ecr_repository(
+                lightsketch_training_repository,
+                tag=self._config["compute"]["ecs"]["training"]["image_tag"],
+            ),
+            memory_limit_mib=self._config["compute"]["ecs"]["training"]["base_memory"],
+            logging=ecs.LogDriver.aws_logs(
+                stream_prefix="lightsketchtraining",
+                log_group=aws_logs.LogGroup(
+                    self,
+                    "lightsketchTrainingServerLogGroup",
+                    log_group_name="/ecs/lightsketchtraining-server",
+                    retention=aws_logs.RetentionDays.ONE_WEEK,
+                    removal_policy=RemovalPolicy.DESTROY,
+                ),
+            ),
+            gpu_count=self._config["compute"]["ecs"]["training"]["cuda"],
+
+        )
+
+        training_container.add_port_mappings(ecs.PortMapping(host_port=0,container_port=self._config["compute"]["ecs"]["training"]["port"]))
+
+    def __create_lightsketch_app_container_def(self):
 
         # Import ECR repository for ui
 
@@ -75,7 +123,7 @@ class Ecs(Construct):
         task_iam_role = self.__create_app_taskdef_role()
 
         # Create EC2 task definition for ui
-        app_taskdef = ecs.Ec2TaskDefinition(
+        self.app_taskdef = ecs.Ec2TaskDefinition(
             self,
             "lightsketch-taskdef",
             task_role=task_iam_role,
@@ -83,13 +131,13 @@ class Ecs(Construct):
         )
         efs_volume_name = "efs-volume"
         efs_mount_path = "/mnt/app"
-        app_taskdef.add_volume(
+        self.app_taskdef.add_volume(
             name=efs_volume_name,
             efs_volume_configuration=ecs.EfsVolumeConfiguration(
                 file_system_id=self._efs.file_system_id,
             ),
         )
-        app_container = app_taskdef.add_container(
+        app_container = self.app_taskdef.add_container(
             "container",
             image=ecs.ContainerImage.from_ecr_repository(
                 lightsketch_repository,
@@ -122,6 +170,7 @@ class Ecs(Construct):
             )
         )
 
+    def __configure_ec2_autoscaling_group(self):
         cloudwatch_agent_config = """
         {
             "metrics": {
@@ -154,7 +203,6 @@ class Ecs(Construct):
         echo ECS_CLUSTER={} >> /etc/ecs/ecs.config
         sudo iptables --insert FORWARD 1 --in-interface docker+ --destination 169.254.169.254/32 --jump DROP
         sudo service iptables save
-        echo ECS_ENABLE_SPOT_INSTANCE_DRAINING=true >> /etc/ecs/ecs.config
         echo ECS_AWSVPC_BLOCK_IMDS=true >> /etc/ecs/ecs.config
         echo ECS_ENABLE_GPU_SUPPORT=true >> /etc/ecs/ecs.config
         cat /etc/ecs/ecs.config
@@ -192,7 +240,6 @@ class Ecs(Construct):
             machine_image=ec2.MachineImage.generic_linux(ami_map={
                 self._region : self._config["compute"]["ecs"]["app"]["amis"][self._region]
                 }),
-            spot_price="0.50",
             security_group=ec2_security_group,
             associate_public_ip_address=True,
             role=self.__create_ec2_role(),
@@ -212,31 +259,49 @@ class Ecs(Construct):
 
         )
         
-        capacity_provider = ecs.AsgCapacityProvider(self, "AsgCapacityProvider",
+        self.capacity_provider = ecs.AsgCapacityProvider(self, "AsgCapacityProvider",
             auto_scaling_group=self.asg,
             enable_managed_termination_protection = False,
-            spot_instance_draining = True,
             enable_managed_scaling = True
 
         )
-        self._cluster.add_asg_capacity_provider(capacity_provider)
+        self._cluster.add_asg_capacity_provider(self.capacity_provider)
 
+    def __create_lightsketch_training_service(self):
         # Create EC2 service for ui
         self._lightsketch_app_service = ecs.Ec2Service(
             self,
             "lightsketchapp-service",
             cluster=self._cluster,
-            task_definition=app_taskdef,
+            task_definition=self.training_taskdef,
             desired_count=1,  
             placement_constraints=[
                 ecs.PlacementConstraint.distinct_instances()
             ],
-            capacity_provider_strategies = [ecs.CapacityProviderStrategy(capacity_provider=capacity_provider.capacity_provider_name,base=1,weight=1)],
+            capacity_provider_strategies = [ecs.CapacityProviderStrategy(capacity_provider=self.capacity_provider.capacity_provider_name,base=1,weight=1)],
             health_check_grace_period=Duration.minutes(5)
         )
 
         self.__setup_application_load_balancer()
-        self.__configure_autoscaling()
+        self.__configure_app_service_autoscaling_rule()
+
+    def __create_lightsketch_app_service(self):
+        # Create EC2 service for ui
+        self._lightsketch_app_service = ecs.Ec2Service(
+            self,
+            "lightsketchapp-service",
+            cluster=self._cluster,
+            task_definition=self.app_taskdef,
+            desired_count=1,  
+            placement_constraints=[
+                ecs.PlacementConstraint.distinct_instances()
+            ],
+            capacity_provider_strategies = [ecs.CapacityProviderStrategy(capacity_provider=self.capacity_provider.capacity_provider_name,base=1,weight=1)],
+            health_check_grace_period=Duration.minutes(5)
+        )
+
+        self.__setup_application_load_balancer()
+        self.__configure_app_service_autoscaling_rule()
 
     def __create_ec2_role(self) -> iam.Role:
         # Create IAM role for EC2 instances
@@ -298,6 +363,41 @@ class Ecs(Construct):
         return task_role
 
 
+    def __create_training_taskdef_role(self) -> iam.Role:
+        # Create IAM role for task definition
+        task_role = iam.Role(
+            self,
+            "app-task-role-" + self._config["stage"],
+            assumed_by=iam.ServicePrincipal("ecs-tasks.amazonaws.com"),
+        )
+
+        # Attach S3 full access policy to the task role
+        task_role.add_managed_policy(
+            iam.ManagedPolicy.from_aws_managed_policy_name("AmazonS3FullAccess")
+        )
+
+        task_role.add_to_policy(
+             iam.PolicyStatement(
+                actions=[
+                    "ssm:GetParameter",
+                    "ssm:GetParameters"
+                    "kms:Decrypt",
+                    "kms:GenerateDataKey"
+                ],
+                resources=[
+                   "*"
+                ],
+            )
+        )
+        task_role.add_to_policy( 
+            iam.PolicyStatement(
+                actions=["ec2:DescribeAvailabilityZones"],
+                resources=["*"],
+            ))
+
+        return task_role
+    
+
     def __setup_application_load_balancer(self):
         # Create security group for the load balancer
         lb_security_group = ec2.SecurityGroup(
@@ -344,7 +444,7 @@ class Ecs(Construct):
 
         )
 
-    def __configure_autoscaling(self):
+    def __configure_app_service_autoscaling_rule(self):
 
         # Add GPU VRAM scaling based on the CloudWatch metrics
         gpu_vram_metric = cloudwatch.Metric(
