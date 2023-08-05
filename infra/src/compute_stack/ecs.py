@@ -383,7 +383,7 @@ class Ecs(Construct):
              iam.PolicyStatement(
                 actions=[
                     "ssm:GetParameter",
-                    "ssm:GetParameters"
+                    "ssm:GetParameters",
                     "kms:Decrypt",
                     "kms:GenerateDataKey"
                 ],
