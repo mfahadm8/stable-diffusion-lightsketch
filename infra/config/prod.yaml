@@ -1,5 +1,5 @@
-aws_account: "188775091215"
-aws_region: us-west-2
+aws_account: "766944019823"
+aws_region: eu-west-2
 
 network:
   vpc:
@@ -8,11 +8,21 @@ network:
 compute:
   ecs:
     app:
-      repo_arn: "arn:aws:ecr:us-east-1:188775091215:repository/lightsketch"
+      repo_arn: "arn:aws:ecr:eu-west-2:766944019823:repository/lightsketch-app"
       image_tag: "latest"
       port: 7861
       minimum_containers: 1
       maximum_containers: 10
+      base_memory: 10000
+      cuda: 1
+      ec2_keypair: dev
+
+    training:
+      repo_arn: "arn:aws:ecr:eu-west-2:766944019823:repository/ls_training"
+      image_tag: "latest"
+      port: 5000
+      minimum_containers: 1
+      maximum_containers: 3
       base_memory: 10000
       cuda: 1
       ec2_keypair: dev
