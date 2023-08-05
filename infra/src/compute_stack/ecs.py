@@ -427,7 +427,7 @@ class Ecs(Construct):
         # Create target group
         app_target_group = elbv2.ApplicationTargetGroup(
             self,
-            "TargetGroup",
+            "TargetGroup-App",
             vpc=self._cluster.vpc,
             protocol=elbv2.ApplicationProtocol.HTTP,
             targets=[self._lightsketch_app_service],
@@ -453,7 +453,7 @@ class Ecs(Construct):
         # Create target group
         training_target_group = elbv2.ApplicationTargetGroup(
             self,
-            "TargetGroup",
+            "TargetGroup-Training",
             vpc=self._cluster.vpc,
             protocol=elbv2.ApplicationProtocol.HTTP,
             targets=[self._lightsketch_training_service],
