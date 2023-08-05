@@ -240,7 +240,7 @@ class Ecs(Construct):
             desired_capacity=self._config["compute"]["ecs"]["app"]["minimum_containers"],
             max_capacity=self._config["compute"]["ecs"]["app"]["maximum_containers"],
             vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC, one_per_az=True),
-            instance_type=ec2.InstanceType.of(ec2.InstanceClass.G3, ec2.InstanceSize.XLARGE4),
+            instance_type=ec2.InstanceType.of(ec2.InstanceClass.G4DN, ec2.InstanceSize.XLARGE),
             machine_image=ec2.MachineImage.generic_linux(ami_map={
                 self._region : self._config["compute"]["ecs"]["app"]["amis"][self._region]
                 }),
