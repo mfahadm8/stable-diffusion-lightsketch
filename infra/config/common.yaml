@@ -23,5 +23,6 @@ compute:
       amis:
         us-east-1: ami-03a32d185474e28bc
         eu-west-1: ami-003c39e7a86e90450
+        eu-west-2: ami-06a49139ce814f53c
 
 
