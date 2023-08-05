@@ -458,7 +458,7 @@ class Ecs(Construct):
             protocol=elbv2.ApplicationProtocol.HTTP,
             targets=[self._lightsketch_training_service],
             health_check=elbv2.HealthCheck(
-                path="training/",
+                path="/training/",
                 protocol=elbv2.Protocol.HTTP,
                 interval=Duration.seconds(60),
                 timeout=Duration.seconds(30),
