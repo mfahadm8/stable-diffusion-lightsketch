@@ -370,7 +370,7 @@ class Ecs(Construct):
         # Create IAM role for task definition
         task_role = iam.Role(
             self,
-            "app-task-role-" + self._config["stage"],
+            "training-task-role-" + self._config["stage"],
             assumed_by=iam.ServicePrincipal("ecs-tasks.amazonaws.com"),
         )
 
