@@ -184,21 +184,12 @@ class Ecs(Construct):
                 "metrics_collected": {
                     "nvidia_gpu": {
                         "measurement": [
-                            {"name": "memory_total", "rename": "nvidia_smi_memory_total", "unit": "Megabytes"},
-                            {"name": "memory_used", "rename": "nvidia_smi_memory_used", "unit": "Megabytes"},
-                            {"name": "memory_free", "rename": "nvidia_smi_memory_free", "unit": "Megabytes"},
-                            {"name": "utilization_memory", "rename": "nvidia_smi_utilization_memory"},
-                            {"name": "utilization_gpu", "rename": "nvidia_smi_utilization_gpu"},
+                            {"name": "memory_used", "rename": "nvidia_smi_memory_used", "unit": "Megabytes"}
                         ],
                         "metrics_collection_interval": 60
                     }
                 },
-                "append_dimensions": {
-                    "ImageId": "${{aws:ImageId}}",
-                    "InstanceId": "${{aws:InstanceId}}",
-                    "InstanceType": "${{aws:InstanceType}}",
-                    "AutoScalingGroupName": "${{aws:AutoScalingGroupName}}"
-                }
+                "aggregation_dimensions" : [[]]
             }
         }
         """
