@@ -11,4 +11,4 @@ aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --
 
 docker tag lightsketch-api:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/lightsketch:latest
 
-docker push 188775091215.dkr.ecr.us-east-1.amazonaws.com/lightsketch:latest
+docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/lightsketch:latest
