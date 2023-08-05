@@ -108,6 +108,9 @@ class Ecs(Construct):
                     removal_policy=RemovalPolicy.DESTROY,
                 ),
             ),
+            environment={
+                "AWS_REGION": self._config["aws_region"],
+            },
             gpu_count=self._config["compute"]["ecs"]["training"]["cuda"],
 
         )
