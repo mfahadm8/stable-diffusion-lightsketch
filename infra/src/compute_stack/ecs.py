@@ -522,7 +522,7 @@ class Ecs(Construct):
             metric=gpu_vram_metric,
             scaling_steps=[
                 appautoscaling.ScalingInterval(change=+1, lower=8000),
-                appautoscaling.ScalingInterval(change=-1, lower=8000),
+                appautoscaling.ScalingInterval(change=-1, lower=7500),
             ],
             evaluation_periods=2,
             cooldown=Duration.minutes(5),
