@@ -177,10 +177,11 @@ class Ecs(Construct):
             )
         )
 
-    def __configure_ec2_autoscaling_group(self):
+    def __get_ec2_autoscaling_group(self,namespace):
         cloudwatch_agent_config = """
         {
             "metrics": {
+                "namespace": "'{}'",
                 "metrics_collected": {
                     "nvidia_gpu": {
                         "measurement": [
@@ -192,7 +193,7 @@ class Ecs(Construct):
                 "aggregation_dimensions" : [[]]
             }
         }
-        """
+        """.format(namespace)
         # Encode the configuration script in base64 and escape all quotes and newlines
         encoded_cloudwatch_agent_config = base64.b64encode(json.dumps(cloudwatch_agent_config).encode('utf-8')).decode('utf-8').replace('\n', '')
 
@@ -217,7 +218,7 @@ class Ecs(Construct):
 
         ec2_security_group = ec2.SecurityGroup(
             self,
-            "Ec2BalancerSecurityGroup",
+            "Ec2BalancerSecurityGroup-"+namespace,
             vpc=self._cluster.vpc,
             allow_all_outbound=True,
         )
@@ -226,9 +227,9 @@ class Ecs(Construct):
             connection=ec2.Port.all_tcp(),
         )
 
-        self.asg = autoscaling.AutoScalingGroup(
+        asg = autoscaling.AutoScalingGroup(
             self,
-            "ECSEC2SpotCapacity",
+            "ECSEC2Capacity-"+namespace,
             vpc=self._vpc,
             min_capacity=self._config["compute"]["ecs"]["app"]["minimum_containers"],
             desired_capacity=self._config["compute"]["ecs"]["app"]["minimum_containers"],
@@ -257,16 +258,20 @@ class Ecs(Construct):
 
         )
         
-        self.capacity_provider = ecs.AsgCapacityProvider(self, "AsgCapacityProvider",
-            auto_scaling_group=self.asg,
+        return asg
+
+    def __create_lightsketch_training_service(self):
+        namespace="ls_training"
+        asg=self.__get_ec2_autoscaling_group(namespace=namespace)
+        # Create EC2 service for ui
+        capacity_provider = ecs.AsgCapacityProvider(self, "AsgCapacityProvider-training",
+            auto_scaling_group=asg,
             enable_managed_termination_protection = False,
             enable_managed_scaling = True
 
         )
-        self._cluster.add_asg_capacity_provider(self.capacity_provider)
+        self._cluster.add_asg_capacity_provider(capacity_provider)
 
-    def __create_lightsketch_training_service(self):
-        # Create EC2 service for ui
         self._lightsketch_training_service = ecs.Ec2Service(
             self,
             "lightsketchtraining-service",
@@ -276,15 +281,25 @@ class Ecs(Construct):
             placement_constraints=[
                 ecs.PlacementConstraint.distinct_instances()
             ],
-            capacity_provider_strategies = [ecs.CapacityProviderStrategy(capacity_provider=self.capacity_provider.capacity_provider_name,base=1,weight=1)],
+            capacity_provider_strategies = [ecs.CapacityProviderStrategy(capacity_provider=capacity_provider.capacity_provider_name,base=1,weight=1)],
             health_check_grace_period=Duration.minutes(5)
         )
 
 
-        self.__configure_training_service_autoscaling_rule()
+        self.__configure_service_autoscaling_rule(namespace,self._lightsketch_training_service)
 
     def __create_lightsketch_app_service(self):
-        # Create EC2 service for ui
+
+        namespace="ls_app"
+        asg=self.__get_ec2_autoscaling_group(namespace=namespace)
+        capacity_provider = ecs.AsgCapacityProvider(self, "AsgCapacityProvider-app",
+            auto_scaling_group=asg,
+            enable_managed_termination_protection = False,
+            enable_managed_scaling = True
+
+        )
+        self._cluster.add_asg_capacity_provider(capacity_provider)
+
         self._lightsketch_app_service = ecs.Ec2Service(
             self,
             "lightsketchapp-service",
@@ -294,11 +309,11 @@ class Ecs(Construct):
             placement_constraints=[
                 ecs.PlacementConstraint.distinct_instances()
             ],
-            capacity_provider_strategies = [ecs.CapacityProviderStrategy(capacity_provider=self.capacity_provider.capacity_provider_name,base=1,weight=1)],
+            capacity_provider_strategies = [ecs.CapacityProviderStrategy(capacity_provider=capacity_provider.capacity_provider_name,base=1,weight=1)],
             health_check_grace_period=Duration.minutes(5)
         )
 
-        self.__configure_app_service_autoscaling_rule()
+        self.__configure_service_autoscaling_rule(namespace,self._lightsketch_app_service)
 
     def __create_ec2_role(self) -> iam.Role:
         # Create IAM role for EC2 instances
@@ -485,71 +500,34 @@ class Ecs(Construct):
 
 
 
-    def __configure_training_service_autoscaling_rule(self):
+    def __configure_service_autoscaling_rule(self,namespace,ecs_service):
 
         # Add GPU VRAM scaling based on the CloudWatch metrics
         gpu_vram_metric = cloudwatch.Metric(
-            namespace="CWAgent",
-            metric_name="AvailableGPUMemoryMiB",
-            dimensions_map={
-                "AutoScalingGroupName": self.asg.auto_scaling_group_name
-            },
-            period=Duration.minutes(1),
-            statistic="Average"
-        )
-    def __configure_app_service_autoscaling_rule(self):
-
-        # Add GPU VRAM scaling based on the CloudWatch metrics
-        gpu_vram_metric = cloudwatch.Metric(
-            namespace="CWAgent",
-            metric_name="AvailableGPUMemoryMiB",
-            dimensions_map={
-                "AutoScalingGroupName": self.asg.auto_scaling_group_name
-            },
+            namespace=namespace,
+            metric_name="nvidia_smi_memory_used",
             period=Duration.minutes(1),
             statistic="Average"
         )
 
-        # # Create a CloudWatch alarm for GPU VRAM usage
-        # gpu_vram_alarm = cloudwatch.Alarm(
-        #     self,
-        #     "GPUVRAMAlarm",
-        #     metric=gpu_vram_metric,
-        #     threshold=90,  # Adjust the threshold as per your requirement
-        #     evaluation_periods=2,
-        #     datapoints_to_alarm=2,
-        #     comparison_operator=cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
-        # )
+        gpu_scaling = autoscaling.ScalableTarget(
+            self,
+            "gpu-vram-scaling-"+namespace,
+            service_namespace=autoscaling.ServiceNamespace.ECS,
+            resource_id=f"service/{self._cluster.cluster_name}/{ecs_service.service_name}",
+            scalable_dimension="ecs:service:DesiredCount",
+            min_capacity=self._config["compute"]["ecs"]["app"]["minimum_containers"],
+            max_capacity=self._config["compute"]["ecs"]["app"]["maximum_containers"],
+        )
 
-        # # Attach the GPU VRAM alarm to the auto-scaling group
-        # self.asg.scale_on_alarm(
-        #     "GPUVRAMScaling",
-        #     alarm=gpu_vram_alarm,
-        #     scaling_steps=[
-        #         autoscaling.ScalingInterval(change=+1, lower=100),
-        #         autoscaling.ScalingInterval(change=+2, lower=200),
-        #     ],
-        #     cooldown=Duration.minutes(1), 
-        # )
-        # gpu_scaling = autoscaling.ScalableTarget(
-        #     self,
-        #     "gpu-vram-scaling",
-        #     service_namespace=autoscaling.ServiceNamespace.ECS,
-        #     resource_id=f"service/{self._cluster.cluster_name}/{self._lightsketch_app_service.service_name}",
-        #     scalable_dimension="ecs:service:DesiredCount",
-        #     min_capacity=self._config["compute"]["ecs"]["app"]["minimum_containers"],
-        #     max_capacity=self._config["compute"]["ecs"]["app"]["maximum_containers"],
-        # )
-
-        # gpu_scaling.scale_on_metric(
-        #     "ScaleToGPURAMUsage",
-        #     metric=gpu_vram_metric,
-        #     scaling_steps=[
-        #         autoscaling.ScalingInterval(change=+1, lower=50),
-        #         autoscaling.ScalingInterval(change=+2, lower=70),
-        #         autoscaling.ScalingInterval(change=+3, lower=90),
-        #     ],
-        #     evaluation_periods=2,
-        #     cooldown=Duration.minutes(5),
-        #     adjustment_type=autoscaling.AdjustmentType.CHANGE_IN_CAPACITY
-        # )
+        gpu_scaling.scale_on_metric(
+            "ScaleToGPURAMUsage-"+namespace,
+            metric=gpu_vram_metric,
+            scaling_steps=[
+                autoscaling.ScalingInterval(change=+1, lower=8000),
+                autoscaling.ScalingInterval(change=-1, lower=8000),
+            ],
+            evaluation_periods=2,
+            cooldown=Duration.minutes(5),
+            adjustment_type=autoscaling.AdjustmentType.CHANGE_IN_CAPACITY
+        )
