@@ -48,7 +48,6 @@ class Ecs(Construct):
         self.__create_ecs_cluster()
         self.__create_lightsketch_app_container_def()
         self.__create_lightsketch_training_container_def()
-        self.__configure_ec2_autoscaling_group()
         self.__create_lightsketch_app_service()
         self.__create_lightsketch_training_service()
         self.__setup_application_load_balancer()
