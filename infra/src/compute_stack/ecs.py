@@ -9,6 +9,7 @@ from aws_cdk import (
     aws_ecs_patterns as ecs_patterns,
     aws_servicediscovery as servicediscovery,
     aws_elasticloadbalancingv2 as elbv2,
+    aws_applicationautoscaling as appautoscaling,
     aws_ssm as ssm,
     aws_efs,
     aws_logs,
@@ -506,10 +507,10 @@ class Ecs(Construct):
             statistic="Average"
         )
 
-        gpu_scaling = autoscaling.ScalableTarget(
+        gpu_scaling = appautoscaling.ScalableTarget(
             self,
             "gpu-vram-scaling-"+namespace,
-            service_namespace=autoscaling.ServiceNamespace.ECS,
+            service_namespace=appautoscaling.ServiceNamespace.ECS,
             resource_id=f"service/{self._cluster.cluster_name}/{ecs_service.service_name}",
             scalable_dimension="ecs:service:DesiredCount",
             min_capacity=self._config["compute"]["ecs"]["app"]["minimum_containers"],
@@ -520,10 +521,10 @@ class Ecs(Construct):
             "ScaleToGPURAMUsage-"+namespace,
             metric=gpu_vram_metric,
             scaling_steps=[
-                autoscaling.ScalingInterval(change=+1, lower=8000),
-                autoscaling.ScalingInterval(change=-1, lower=8000),
+                appautoscaling.ScalingInterval(change=+1, lower=8000),
+                appautoscaling.ScalingInterval(change=-1, lower=8000),
             ],
             evaluation_periods=2,
             cooldown=Duration.minutes(5),
-            adjustment_type=autoscaling.AdjustmentType.CHANGE_IN_CAPACITY
+            adjustment_type=appautoscaling.AdjustmentType.CHANGE_IN_CAPACITY
         )
