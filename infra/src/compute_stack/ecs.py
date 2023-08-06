@@ -180,7 +180,7 @@ class Ecs(Construct):
         cloudwatch_agent_config = """
         {
             "metrics": {
-                "namespace": "'{}'",
+                "namespace": "{}",
                 "metrics_collected": {
                     "nvidia_gpu": {
                         "measurement": [
