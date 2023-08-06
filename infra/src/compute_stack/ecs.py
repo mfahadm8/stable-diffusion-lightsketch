@@ -177,10 +177,9 @@ class Ecs(Construct):
         )
 
     def __get_ec2_autoscaling_group(self,namespace):
-        cloudwatch_agent_config = """
-        {
+        cloudwatch_agent_config = {
             "metrics": {
-                "namespace": "{}",
+                "namespace": namespace,
                 "metrics_collected": {
                     "nvidia_gpu": {
                         "measurement": [
@@ -189,12 +188,10 @@ class Ecs(Construct):
                         "metrics_collection_interval": 60
                     }
                 },
-                "aggregation_dimensions" : [[]]
+                "aggregation_dimensions": [[]]
             }
         }
-        """.format(namespace)
-        # Encode the configuration script in base64 and escape all quotes and newlines
-        encoded_cloudwatch_agent_config = base64.b64encode(json.dumps(cloudwatch_agent_config).encode('utf-8')).decode('utf-8').replace('\n', '')
+        cloudwatch_agent_config_json = json.dumps(cloudwatch_agent_config)
 
         user_data = ec2.UserData.for_linux(shebang="#!/usr/bin/bash")
         user_data_script = """#!/usr/bin/bash
@@ -211,7 +208,7 @@ class Ecs(Construct):
         echo '{}' > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
         /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
         /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a start
-        """.format(self.cluster_name ,cloudwatch_agent_config)
+        """.format(self.cluster_name ,cloudwatch_agent_config_json)
 
         user_data.add_commands(user_data_script)
 
