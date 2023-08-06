@@ -238,7 +238,7 @@ class Ecs(Construct):
                 }),
             security_group=ec2_security_group,
             associate_public_ip_address=True,
-            role=self.__create_ec2_role(),
+            role=self.__create_ec2_role(namespace=namespace),
             key_name=self._config["compute"]["ecs"]["app"]["ec2_keypair"],
             user_data=user_data,
             new_instances_protected_from_scale_in =False,
@@ -312,11 +312,11 @@ class Ecs(Construct):
 
         self.__configure_service_autoscaling_rule(namespace,self._lightsketch_app_service)
 
-    def __create_ec2_role(self) -> iam.Role:
+    def __create_ec2_role(self,namespace) -> iam.Role:
         # Create IAM role for EC2 instances
         role = iam.Role(
             self,
-            "ec2-role-"+self._config["stage"],
+            "ec2-role-"+namespace+self._config["stage"],
             assumed_by=iam.ServicePrincipal("ec2.amazonaws.com"),
         )
 
