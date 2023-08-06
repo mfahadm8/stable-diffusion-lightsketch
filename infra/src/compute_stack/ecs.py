@@ -521,9 +521,8 @@ class Ecs(Construct):
             "ScaleToGPURAMUsage-"+namespace,
             metric=gpu_vram_metric,
             scaling_steps=[
-                appautoscaling.ScalingInterval(change=-1, lower=0,upper=2000),
-                appautoscaling.ScalingInterval(change=0, lower=2000,upper=6000),
-                appautoscaling.ScalingInterval(change=+1, lower=6000,upper=15000),
+                appautoscaling.ScalingInterval(change=-1, lower=0,upper=8000),
+                appautoscaling.ScalingInterval(change=+1, lower=8000,upper=15000),
             ],
             evaluation_periods=2,
             cooldown=Duration.minutes(5),
